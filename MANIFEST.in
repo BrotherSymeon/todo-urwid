@@ -1,0 +1,11 @@
+include AUTHORS.rst
+include CHANGELOG.rst
+include README.rst
+
+include requirements/dist.txt
+include requirements/setup.txt
+include requirements/test.txt
+
+recursive-include tests *
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]

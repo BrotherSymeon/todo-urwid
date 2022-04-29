@@ -1,0 +1,4 @@
+-r dev.txt
+-r dist.txt
+-r setup.txt
+-r test.txt

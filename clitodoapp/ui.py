@@ -1,7 +1,10 @@
 import urwid
+import sys
+import traceback 
 
 palette = [
     ("reversed", "standout", ""),
+    ("basic", "yellow","dark blue"),
     ("b", "black", "dark gray"),
     ("highlight", "black", "light blue"),
     ("bg", "black", "dark blue"),
@@ -11,40 +14,12 @@ palette = [
 class PayrollUI:
     def __init__(self):
         pass
-
-    def input_name(self, button, name_field):
-        name = name_field.get_edit_text().rstrip()
-        print(name)
-        self.initialize_list_ui()
-
-    def initialize_list_ui(self):
-        self.top.original_widget = self.employee_list_ui()
-
-    def new_employee_screen(self):
-        txt = urwid.Text("Enter Employee Name below: ")
-        name_field = urwid.Edit(
-            caption="New Todo",
-            edit_text="",
-            multiline=False,
-            align="left",
-            wrap="space",
-            allow_tab=False,
-            edit_pos=None,
-            layout=None,
-            mask=None,
-        )
-        btn = urwid.Button("OK", user_data=None)
-        div = urwid.Divider(u"─",bottom=2)
-        name_button = urwid.AttrMap(btn, None, focus_map="reversed")
-        urwid.connect_signal(btn, "click", self.input_name, name_field)
-        wid = urwid.Pile([txt, name_field, div, name_button])
-        new = urwid.Filler(urwid.AttrMap(wid, None,
-            focus_map=""),top=0,bottom=0)
-        ok_screen_box = urwid.Padding(
-            urwid.LineBox(
-                new,
-                title="",
-                title_align="center",
+    
+    def line_box(self, widget, caption='', align_title='center'):
+        return urwid.LineBox(
+                widget,
+                title=caption,
+                title_align=align_title,
                 tlcorner="┌",
                 tline="─",
                 lline="│",
@@ -53,14 +28,102 @@ class PayrollUI:
                 rline="│",
                 bline="─",
                 brcorner="┘",
-            ),
-            align="center",
-            min_width=None,
-            left=10,
-            right=10,
-        )
+            )
 
-        self.top.original_widget = ok_screen_box
+    def input_name(self, button, name_field):
+        name = name_field.get_edit_text().rstrip()
+        print(name, "you betcha")
+        self.initialize_list_ui()
+
+    def initialize_list_ui(self):
+        self.top.original_widget = self.employee_list_ui()
+
+    def on_init_list(self, t, e ):
+        self.initialize_list_ui()
+
+    def new_employee_screen(self):
+
+        try:
+            txt_box = urwid.Text("New Todo")
+            txt = self.line_box(txt_box)
+            name_field = urwid.Edit(
+                caption="",
+                edit_text="",
+                multiline=False,
+                align="left",
+                wrap="space",
+                allow_tab=False,
+                edit_pos=None,
+                layout=None,
+                mask=None,
+            )
+            btn = urwid.Button("OK", user_data=None)
+            btn_cancel = urwid.Button("Cancel", user_data=None)
+            div = urwid.Divider(u"─",bottom=2)
+            ok_btn_attr = urwid.AttrMap(
+                        btn,
+                        None,
+                        focus_map="reversed"
+                    )
+            cancel_btn_attr = urwid.AttrMap(
+                        btn_cancel,
+                        None,
+                        focus_map="reversed"
+                    )
+            
+            cols = urwid.Columns(
+                    [
+                        (10, ok_btn_attr ),
+                        (10, cancel_btn_attr),
+                    ],
+                    dividechars=2,
+                    focus_column=None,
+                    min_width=1,
+                    box_columns=None,
+            )
+            name_button = urwid.Padding(
+                cols,
+                align='center',
+                width='pack',
+                left=25
+            )
+
+            urwid.connect_signal(btn, "click", self.input_name, name_field)
+            urwid.connect_signal(btn_cancel, "click", self.on_init_list,
+                    name_field)
+            wid = urwid.Pile([txt, name_field, div, name_button])
+            new = urwid.AttrMap(wid, None, focus_map="")
+            #new = urwid.Filler(urwid.AttrMap(wid, None,
+            #    focus_map=""),top=0,bowtom=0)
+            background = urwid.SolidFill(' ')
+            interior = urwid.Filler(new)
+            window = self.line_box(interior)
+            topw = urwid.Overlay(window, background, 'center', 50, 'middle', 10)
+
+            #ok_screen_box = urwid.Padding(
+            #    urwid.LineBox(
+            #        new,
+            #        title="",
+            #        title_align="center",
+            #        tlcorner="┌",
+            #        tline="─",
+            #        lline="│",
+            #        trcorner="┐",
+            #        blcorner="└",
+            #        rline="│",
+            #        bline="─",
+            #        brcorner="┘",
+            #    ),
+            #    align="center",
+            #    min_width=None,
+            #    left=10,
+            #    right=10,
+            #)
+        except Exception as e:
+            traceback.print_exc(file=sys.stdout)
+            print(arg)
+
+        self.top.original_widget = urwid.Padding(topw, right=0, left=0)
 
     def header_widget(self):
         self.todos_count_label = urwid.Text("Total Todos", align="left")

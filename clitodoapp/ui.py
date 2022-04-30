@@ -1,6 +1,11 @@
 import urwid
 import sys
 import traceback 
+import pdb
+
+
+from clitodoapp.models.todo import Db, Todos, Todo
+
 
 palette = [
     ("reversed", "standout", ""),
@@ -11,8 +16,9 @@ palette = [
 ]
 
 
-class PayrollUI:
-    def __init__(self):
+class TodoUI:
+    def __init__(self, todos):
+        self.Todos = todos
         pass
     
     def line_box(self, widget, caption='', align_title='center'):
@@ -32,7 +38,7 @@ class PayrollUI:
 
     def input_name(self, button, name_field):
         name = name_field.get_edit_text().rstrip()
-        print(name, "you betcha")
+        todo = self.Todos.new(name)
         self.initialize_list_ui()
 
     def initialize_list_ui(self):
@@ -41,10 +47,11 @@ class PayrollUI:
     def on_init_list(self, t, e ):
         self.initialize_list_ui()
 
-    def new_employee_screen(self):
+    def new_todo_screen(self):
 
         try:
             txt_box = urwid.Text("New Todo")
+            txt_box = urwid.Padding(txt_box, align='center', left=18, right=0)
             txt = self.line_box(txt_box)
             name_field = urwid.Edit(
                 caption="",
@@ -59,7 +66,7 @@ class PayrollUI:
             )
             btn = urwid.Button("OK", user_data=None)
             btn_cancel = urwid.Button("Cancel", user_data=None)
-            div = urwid.Divider(u"─",bottom=2)
+            div = urwid.Divider("─",bottom=2)
             ok_btn_attr = urwid.AttrMap(
                         btn,
                         None,
@@ -70,7 +77,7 @@ class PayrollUI:
                         None,
                         focus_map="reversed"
                     )
-            
+
             cols = urwid.Columns(
                     [
                         (10, ok_btn_attr ),
@@ -93,49 +100,28 @@ class PayrollUI:
                     name_field)
             wid = urwid.Pile([txt, name_field, div, name_button])
             new = urwid.AttrMap(wid, None, focus_map="")
-            #new = urwid.Filler(urwid.AttrMap(wid, None,
-            #    focus_map=""),top=0,bowtom=0)
-            background = urwid.SolidFill(' ')
+            background = urwid.AttrMap(urwid.SolidFill(' '), 'basic')
             interior = urwid.Filler(new)
             window = self.line_box(interior)
             topw = urwid.Overlay(window, background, 'center', 50, 'middle', 10)
 
-            #ok_screen_box = urwid.Padding(
-            #    urwid.LineBox(
-            #        new,
-            #        title="",
-            #        title_align="center",
-            #        tlcorner="┌",
-            #        tline="─",
-            #        lline="│",
-            #        trcorner="┐",
-            #        blcorner="└",
-            #        rline="│",
-            #        bline="─",
-            #        brcorner="┘",
-            #    ),
-            #    align="center",
-            #    min_width=None,
-            #    left=10,
-            #    right=10,
-            #)
         except Exception as e:
             traceback.print_exc(file=sys.stdout)
-            print(arg)
 
         self.top.original_widget = urwid.Padding(topw, right=0, left=0)
 
     def header_widget(self):
         self.todos_count_label = urwid.Text("Total Todos", align="left")
         self.todos_count_display = urwid.Text("0", align="left")
-        self.nocomp_count_label = urwid.Text("Todos Not Comleted", align="right")
+        self.nocomp_count_label = urwid.Text("Todos Not Completed", align="right")
         self.nocomp_count_display = urwid.Text("0", align="right")
         cols = urwid.Columns(
             [
                 (12, self.todos_count_label),
-                self.todos_count_display,
+                ('pack', self.todos_count_display),
+                (24, urwid.Text("│")),
                 (19, self.nocomp_count_label),
-                self.nocomp_count_display,
+                (3,self.nocomp_count_display),
             ],
             dividechars=0,
             focus_column=None,
@@ -171,17 +157,30 @@ class PayrollUI:
 
         return self.top
 
+    def row_items(self, todo_list):
+        retList = []
+        for todo in todo_list:
+            idCol = (6, urwid.Text(str(todo.id), align='left'))
+            doneCol = urwid.Text(str(bool(todo.done)), align='left')
+            todoCol = urwid.Text(todo.todo)
+            row = urwid.Columns([idCol, doneCol, todoCol])
+            retList.append(row)
+        return retList
+
     def employee_list_ui(self):
+        #breakpoint()
         self.header = self.header_widget()
+        todo_list =  self.Todos.get_all()
 
         # making the list
-        self.list_walker = urwid.SimpleFocusListWalker([])
+        self.list_walker = urwid.SimpleFocusListWalker(self.row_items(todo_list))
+
 
         list_heading = urwid.Columns(
             [
                 (6, urwid.Text("Id", align="left")),
-                urwid.Text("Todo", align="left"),
-                urwid.Text("Done", align="right"),
+                urwid.Text("Done", align="left"),
+                urwid.Text("Todo"),
             ],
             dividechars=0,
             focus_column=None,
@@ -202,7 +201,7 @@ class PayrollUI:
                         bottom=0,
                     ),
                 ),
-                (1, urwid.Filler(urwid.Divider())),
+                (1, urwid.Filler(urwid.Divider("─"))),
                 self.list_box,
             ],
             focus_item=2,
@@ -222,17 +221,17 @@ class PayrollUI:
             brcorner="┘",
         )
 
-        payroll_ui = urwid.Frame(
+        todo_ui = urwid.Frame(
             self.body, header=self.header, footer=None, focus_part="body"
         )
 
-        return urwid.Padding(payroll_ui, right=0, left=0)
+        return urwid.Padding(todo_ui, right=0, left=0)
 
     def handle_keys(self, key):
         if key == "q":
             raise urwid.ExitMainLoop()
 
-        key_dict = {"l": self.load_employees, "n": self.new_employee_screen}
+        key_dict = {"l": self.load_employees, "n": self.new_todo_screen}
 
         try:
             key_dict[key]()
@@ -241,10 +240,8 @@ class PayrollUI:
 
 
 if __name__ == "__main__":
-    print(__name__)
-    payroll_ui = PayrollUI()
-    ui = payroll_ui.draw_ui()
-    loop = urwid.MainLoop(ui, palette, unhandled_input=payroll_ui.handle_keys)
+    todos = Todos('todo.db')
+    todo_ui = TodoUI(todos)
+    ui = todo_ui.draw_ui()
+    loop = urwid.MainLoop(ui, palette, unhandled_input=todo_ui.handle_keys)
     loop.run()
-else:
-    print(__name__)

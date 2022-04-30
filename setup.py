@@ -11,7 +11,7 @@ from setuptools import setup
 from subprocess import check_output
 from typing import List, Optional, Tuple
 
-from clitodoapp.version import __version__
+from clitodoapp.app.version import __version__
 
 
 __here__ = Path(__file__).parent.absolute()

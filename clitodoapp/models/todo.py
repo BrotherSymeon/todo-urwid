@@ -22,7 +22,7 @@ class Db:
         self.cur = self.conn.cursor()
         # cur.execute("create table todos(id, todo, done);")
 
-    def run_query(self, sql):
+    def run_query(self, sql, params=()):
         retlist = []
         with self.conn:
             if "select" in sql:
@@ -31,13 +31,15 @@ class Db:
                     retlist.append(row)
             else:
                 self.cur.execute(sql)
+                self.con.commit()
         return retlist
 
     def init_db(self):
         """initialize the db"""
         try:
-            self.cur.execute("select 1 from todos;")
-            t = self.cur.fetchall()
+            LOG.info("testing whether or not there is a todo table yet")
+            self.cur.execute("select * from todos;")
+            LOG.info("the todo table seems to be in existance")
         except sqlite3.Error as e:
             LOG.info("maybe no todo table: trying to create one")
             try:
@@ -95,6 +97,7 @@ class Todos(Db):
                 Todos.SQL_UPDATE_BY_ID,
                 (todo.todo, int(todo.done), todo.id),
             )
+            self.conn.commit()
         else:
             self.cur.execute("select max(id) as max_id from todos;")
             for row in self.cur:
@@ -108,6 +111,7 @@ class Todos(Db):
                 "insert into todos(id, todo, done)values(?,?,?);",
                 (max_id, todo.todo, int(todo.done)),
             )
+            self.conn.commit()
             self.cur.execute("select id, todo, done from todos where id=?;", (max_id,))
             for row in self.cur:
                 todo.id = row["id"]
@@ -115,6 +119,7 @@ class Todos(Db):
     def delete(self, todo):
         """deletes a Todo from the database"""
         self.cur.execute("delete from todos where id = ?", todo.id)
+        self.conn.commit()
 
 
 class Todo:

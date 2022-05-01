@@ -21,7 +21,7 @@ class TodoUI:
     def __init__(self, todos):
         self.Todos = todos
         self.filter_group = []
-        self.filter = "ALL"
+        self.filter = "NOT DONE"
 
     def line_box(self, widget, caption="", align_title="center"):
         return urwid.LineBox(
@@ -138,44 +138,39 @@ class TodoUI:
 
         self.top.original_widget = urwid.Padding(topw, right=0, left=0)
 
-    def filter_all_changed(self, widget, state ):
-        if state == True:
-            self.filter = "ALL"
+    def filter_changed(self, widget, state):
+        #breakpoint()
+        if state:
+            self.filter = widget.label.upper()
             self.initialize_list_ui()
-
-    def filter_done_changed(self, widget, state):
-        if state == True:
-            self.filter = "DONE"
-            self.initialize_list_ui()
-
-    def filter_not_done_changed(self, widget, state):
-        if state == True:
-            self.filter = "NOT_DONE"
-            self.initialize_list_ui()
+            self.set_filter_buttons()
 
     def filter_widget(self):
         #breakpoint()
         try:
             self.filter_all = urwid.RadioButton(
-                group=self.filter_group,
-                label="All",
-                on_state_change=self.filter_all_changed,
+                self.filter_group,
+                "All",
+                self.filter=="ALL",
+                on_state_change=self.filter_changed,
             )
             self.filter_done = urwid.RadioButton(
-                group=self.filter_group,
-                label="Done",
-                on_state_change=self.filter_done_changed,
+                self.filter_group,
+                "Done",
+                self.filter=="DONE",
+                on_state_change=self.filter_changed,
             )
             self.filter_not_done = urwid.RadioButton(
-                group=self.filter_group,
-                label="Not Done",
-                on_state_change=self.filter_not_done_changed,
+                self.filter_group,
+                "Not Done",
+                self.filter=="NOT DONE",
+                on_state_change=self.filter_changed,
             )
             cols = urwid.Columns(
                 [
-                    self.filter_all,
-                    self.filter_done,
                     self.filter_not_done,
+                    self.filter_done,
+                    self.filter_all,
                 ],
                 dividechars=0,
                 focus_column=None,
@@ -217,12 +212,22 @@ class TodoUI:
     def update_non_comp_count(self, count):
         self.nocomp_count_display.set_text(str(count))
 
+    def set_filter_buttons(self):
+        #breakpoint()
+        if self.filter == "ALL":
+            self.filter_all.set_state(True, do_callback=True)
+        elif self.filter == "DONE":
+            self.filter_done.set_state(True, do_callback=True)
+        elif self.filter == "NOT ALL":
+            self.filter_not_done.set_state(True, do_callback=True)
+
     def update_todo_done(self, widget, new_state, user_data):
         # breakpoint()
         todo = user_data[0]
         todo.done = new_state
         self.Todos.save(todo)
         self.initialize_list_ui()
+        self.set_filter_buttons()
 
     def load_employees(self):
         print("loading employees")
@@ -275,17 +280,29 @@ class TodoUI:
             )
             retList.append(row)
         return retList
-
-    def todo_list_ui(self):
-        #breakpoint()
-        self.header = self.header_widget()
+    def get_filtered_todos(self):
         if self.filter == "ALL": 
             todo_list = self.Todos.get_all()
         elif self.filter == "DONE":
             todo_list = self.Todos.get_done()
-        elif self.filter == "NOT_DONE":
+        elif self.filter == "NOT DONE":
             todo_list = self.Todos.get_not_done()
+        return todo_list
 
+    def update_header_counts(self):
+        todo_list = self.get_filtered_todos()
+        self.update_todo_count(len(todo_list))
+        nocomp_todos = [t for t in todo_list if bool(t.done) == False]
+        self.update_non_comp_count(len(nocomp_todos))
+
+    def load_filtered_todos(self):
+        todo_list = self.get_filtered_todos()
+        self.list_walker = urwid.SimpleFocusListWalker(self.row_items(todo_list))
+
+    def todo_list_ui(self):
+        #breakpoint()
+        self.header = self.header_widget()
+        todo_list = self.get_filtered_todos()
         self.update_todo_count(len(todo_list))
         nocomp_todos = [t for t in todo_list if bool(t.done) == False]
         self.update_non_comp_count(len(nocomp_todos))

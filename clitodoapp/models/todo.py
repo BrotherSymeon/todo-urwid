@@ -54,6 +54,8 @@ class Db:
 class Todos(Db):
     SQL_SELECT_BY_ID = "select id, todo, done from todos where id ==(?);"
     SQL_SELECT_ALL = "select id, todo, done from todos;"
+    SQL_SELECT_DONE = "select id, todo, done from todos where done=1;"
+    SQL_SELECT_NOT_DONE = "select id, todo, done from todos where done=0;"
     SQL_UPDATE_BY_ID = "update todos set todo=?,done=? where id=?;"
     def __init__(self, db_path):
         super().__init__(db_path)
@@ -73,17 +75,28 @@ class Todos(Db):
             todo.done = bool(row["done"])
         return todo
 
-    def get_all(self):
-        """gets all of the todos from the database"""
-        # TODO:change this to use the self.run_query(sql) method  <29-04-22, yourname> #
-        self.cur.execute(Todos.SQL_SELECT_ALL)
+    def get_records(self, cur):
         all_todos = []
-        for row in self.cur:
+        for row in cur:
             todo = Todo(row["todo"])
             todo.id = row["id"]
             todo.done = bool(row["done"])
             all_todos.append(todo)
+
         return all_todos
+
+    def get_done(self):
+        self.cur.execute(Todos.SQL_SELECT_DONE)
+        return self.get_records(self.cur)
+
+    def get_not_done(self):
+        self.cur.execute(Todos.SQL_SELECT_NOT_DONE)
+        return self.get_records(self.cur)
+    
+    def get_all(self):
+        """gets all of the todos from the database"""
+        self.cur.execute(Todos.SQL_SELECT_ALL)
+        return self.get_records(self.cur)
 
     def save(self, todo):
         """creates or updates the current todo to the db
@@ -118,7 +131,7 @@ class Todos(Db):
 
     def delete(self, todo):
         """deletes a Todo from the database"""
-        self.cur.execute("delete from todos where id = ?", todo.id)
+        self.cur.execute("delete from todos where id = ?", (todo.id,))
         self.conn.commit()
 
 

@@ -8,15 +8,15 @@ def get_arguments_parser() -> argparse.Namespace:
     )
 
     parser.add_argument(
-        '--config_path',
-        dest='config_path',
+        "--config_path",
+        dest="config_path",
         type=str,
         help="path to config file",
     )
 
     parser.add_argument(
-        '--config_section_name',
-        dest='config_section_name',
+        "--config_section_name",
+        dest="config_section_name",
         default=None,
         type=str,
         help="name of config section to use",

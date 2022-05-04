@@ -8,8 +8,6 @@ from typing import Dict
 import pytz
 
 
-
-
 class LogRecordHostnameInjector(logging.Filter):
     _hostname = socket.gethostname()
 
@@ -28,10 +26,11 @@ class LogRecordFormatter(logging.Formatter):
         https://github.com/python/cpython/blob/v3.7.3/Lib/_strptime.py#L457-L494
 
     """
+
     converter = datetime.fromtimestamp
     _tz = pytz.UTC
 
-    def formatTime(self, record: logging.LogRecord, datefmt: str=None) -> str:
+    def formatTime(self, record: logging.LogRecord, datefmt: str = None) -> str:
         ct = self.converter(record.created, self._tz)
 
         if datefmt:
@@ -41,9 +40,6 @@ class LogRecordFormatter(logging.Formatter):
             s = "%s,%03d" % (t, record.msecs)
 
         return s
-
-
-
 
 
 def setup_logging(config: Dict) -> None:

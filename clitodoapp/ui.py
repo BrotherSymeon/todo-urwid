@@ -3,8 +3,11 @@ import sys
 import traceback
 import pdb
 
+import logging
 
 from clitodoapp.models.todo import Db, Todos, Todo
+
+LOG = logging.getLogger(__name__)
 
 
 palette = [
@@ -41,7 +44,9 @@ class TodoUI:
     def input_name(self, button, name_field):
         name = name_field.get_edit_text().rstrip()
         if len(name) > 0:
+            LOG.info("Adding new todo: {0}".format(name))
             todo = self.Todos.new(name)
+            LOG.info("New todo was added to Db: {0}".format(str(todo)))
         self.initialize_list_ui()
 
     def edit_todo_desc(self, button, user_data):
@@ -61,6 +66,7 @@ class TodoUI:
         self.initialize_list_ui()
 
     def delete_todo(self, widget, user_data):
+        LOG.info("deleting todo with if {0}".format(user_data[0]))
         todo = self.Todos.get_by_id(user_data[0])
         self.Todos.delete(todo)
         self.initialize_list_ui()
@@ -139,31 +145,31 @@ class TodoUI:
         self.top.original_widget = urwid.Padding(topw, right=0, left=0)
 
     def filter_changed(self, widget, state):
-        #breakpoint()
+        # breakpoint()
         if state:
             self.filter = widget.label.upper()
             self.initialize_list_ui()
             self.set_filter_buttons()
 
     def filter_widget(self):
-        #breakpoint()
+        # breakpoint()
         try:
             self.filter_all = urwid.RadioButton(
                 self.filter_group,
                 "All",
-                self.filter=="ALL",
+                self.filter == "ALL",
                 on_state_change=self.filter_changed,
             )
             self.filter_done = urwid.RadioButton(
                 self.filter_group,
                 "Done",
-                self.filter=="DONE",
+                self.filter == "DONE",
                 on_state_change=self.filter_changed,
             )
             self.filter_not_done = urwid.RadioButton(
                 self.filter_group,
                 "Not Done",
-                self.filter=="NOT DONE",
+                self.filter == "NOT DONE",
                 on_state_change=self.filter_changed,
             )
             cols = urwid.Columns(
@@ -213,7 +219,7 @@ class TodoUI:
         self.nocomp_count_display.set_text(str(count))
 
     def set_filter_buttons(self):
-        #breakpoint()
+        # breakpoint()
         if self.filter == "ALL":
             self.filter_all.set_state(True, do_callback=True)
         elif self.filter == "DONE":
@@ -280,8 +286,9 @@ class TodoUI:
             )
             retList.append(row)
         return retList
+
     def get_filtered_todos(self):
-        if self.filter == "ALL": 
+        if self.filter == "ALL":
             todo_list = self.Todos.get_all()
         elif self.filter == "DONE":
             todo_list = self.Todos.get_done()
@@ -300,7 +307,7 @@ class TodoUI:
         self.list_walker = urwid.SimpleFocusListWalker(self.row_items(todo_list))
 
     def todo_list_ui(self):
-        #breakpoint()
+        # breakpoint()
         self.header = self.header_widget()
         todo_list = self.get_filtered_todos()
         self.update_todo_count(len(todo_list))
@@ -355,7 +362,6 @@ class TodoUI:
             ],
         )
         self.footer = urwid.AttrMap(urwid.Text(footer_text), "foot")
-        # TODO:we need to make a footer for here  <30-04-22, yourname> #
         todo_ui = urwid.Frame(
             self.body, header=self.header, footer=self.footer, focus_part="body"
         )

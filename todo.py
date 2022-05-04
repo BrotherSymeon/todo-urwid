@@ -97,7 +97,7 @@ class TodoBox(urwid.Padding):
 listbox = None
 
 
-def run(parser):
+def run():
     global listbox
     listbox = CustomListBox()
 

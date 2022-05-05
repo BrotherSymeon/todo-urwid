@@ -104,7 +104,7 @@ setup(
     include_package_data=True,
     entry_points={
         'console_scripts': [
-            'clitodoapp=clitodoapp.main:main',
+            'clitodoapp=clitodoapp.__main__:main',
         ],
     },
 

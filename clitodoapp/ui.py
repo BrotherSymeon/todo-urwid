@@ -157,26 +157,27 @@ class TodoUI:
             self.filter_all = urwid.RadioButton(
                 self.filter_group,
                 "All",
-                self.filter == "ALL",
+                bool(self.filter == "ALL"),
                 on_state_change=self.filter_changed,
             )
             self.filter_done = urwid.RadioButton(
                 self.filter_group,
                 "Done",
-                self.filter == "DONE",
+                bool(self.filter == "DONE"),
                 on_state_change=self.filter_changed,
             )
             self.filter_not_done = urwid.RadioButton(
                 self.filter_group,
                 "Not Done",
-                self.filter == "NOT DONE",
+                bool(self.filter == "NOT DONE"),
                 on_state_change=self.filter_changed,
             )
+            self.set_filter_buttons()
             cols = urwid.Columns(
                 [
-                    self.filter_not_done,
-                    self.filter_done,
-                    self.filter_all,
+                    ('weight', 1, self.filter_not_done),
+                    ('weight', 1, self.filter_done),
+                    ('weight', 1, self.filter_all),
                 ],
                 dividechars=0,
                 focus_column=None,
@@ -247,8 +248,9 @@ class TodoUI:
     def row_items(self, todo_list):
         retList = []
         for todo in todo_list:
-            idCol = (4, urwid.Text(str(todo.id), align="left"))
+            idCol = ('fixed',4, urwid.Text(str(todo.id), align="left"))
             doneCol = (
+                'fixed',
                 6,
                 urwid.CheckBox(
                     "",
@@ -257,7 +259,7 @@ class TodoUI:
                     user_data=(todo,),
                 ),
             )
-            todoCol = ("weight", 2, urwid.Text(todo.todo, align="left"))
+            todoCol = ("weight", 4, urwid.Text(todo.todo, align="left"))
             editBtnCol = urwid.Button(
                 "Edit", self.todo_detail_screen, ("edit", todo.id)
             )
@@ -266,8 +268,8 @@ class TodoUI:
             del_btn_attr = urwid.AttrMap(delBtnCol, None, focus_map="reversed")
             cols = urwid.Columns(
                 [
-                    ("weight", 1, edit_btn_attr),
-                    (10, del_btn_attr),
+                    ("fixed", 8, edit_btn_attr),
+                    ("fixed", 10, del_btn_attr),
                 ],
                 dividechars=1,
                 focus_column=None,

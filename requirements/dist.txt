@@ -1,3 +1,6 @@
 pytz
 PyYAML
 urwid
+Goodconf
+sh
+tinydb

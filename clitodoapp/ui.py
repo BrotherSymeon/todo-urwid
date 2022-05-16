@@ -6,6 +6,7 @@ import pdb
 import logging
 
 from clitodoapp.models.todo import Db, Todos, Todo
+from panwid.dialog import *
 
 LOG = logging.getLogger(__name__)
 
@@ -17,14 +18,231 @@ palette = [
     ("b", "black", "dark gray"),
     ("highlight", "black", "light blue"),
     ("bg", "black", "dark blue"),
+    ('popbg', 'white', 'dark blue'),
 ]
 
+class TodoDetailLauncher(urwid.PopUpLauncher):
+    def __init__(self):
+        LOG.info("TodoDetailLauncher: init object")
+        self.__super.__init__(urwid.Button(""))
+        urwid.connect_signal(
+                self.original_widget,
+                'click',
+                lambda button: self.open_pop_up()
+        )
+        LOG.info("TodoDetailLauncher: init DONE")
+
+
+    def create_pop_up(self):
+        LOG.info("TodoDetailLauncher: create_pop_up called")
+        pop_up = TodoDetailDialog()
+        urwid.connect_signal(
+            pop_up,
+            'close-ok',
+            self.on_ok_clicked
+        )
+        urwid.connect_signal(
+            pop_up,
+            'close-cancel',
+            self.on_cancel_clicked
+        )
+        LOG.info("TodoDetailLauncher: create_pop_up done")
+        return pop_up
+
+    def on_cancel_clicked(self, user_data):
+        self.close_pop_up()
+
+    def on_ok_clicked(self, user_data):
+        self.close_pop_up()
+
+
+    def get_pop_up_parameters(self):
+        LOG.info("TodoDetailLauncher: get_pop_up_parameter called")
+        return {'left':0, 'top':1, 'overlay_width':78, 'overlay_height':14}
+
+
+
+class TodoDetailDialog(urwid.WidgetWrap):
+    """A dialog that has controls to create or update a todo """
+    signals = ['close-ok', 'close-cancel']
+    def __init__(self):
+        # the description of the todo
+        self.todo_desc = ''
+        # done or not this is set when the user clicks the radiobutton
+        self.done = False
+        # priority of the todo 1, 2 or 3. this is set when the user clicks the radiobutton
+        self.priority = 0
+        # if its blocked or not. this is set when the user clicks the radiobutton
+        self.blocked = False
+        # reason for the blockage. this is set when the user clicks the radiobutton
+        self.blocked_reason = ''
+
+        self.ok_button = None
+
+        self.cancel_button = None
+
+        todo_cols = self.todo_colums()
+        done_cols = self.done_columns()
+        priority_cols = self.priority_columns()
+        blocked_cols = self.blocked_columns()
+        ok_cancel_cols = self.ok_cancel_columns()
+        pile = urwid.Pile([
+            todo_cols,
+            done_cols,
+            priority_cols,
+            blocked_cols,
+            ok_cancel_cols
+        ])
+
+        fill = urwid.Filler(pile)
+
+        self.__super.__init__(urwid.AttrWrap(fill, 'popbg'))
+
+    def todo_desc_changed(self, user_data):
+        """ set the todo_desc"""
+        self.todo_desc = user_data
+
+
+    def todo_colums(self):
+        todo_label = urwid.Text(u"Todo: ")
+        todo_edit = urwid.Edit()
+        urwid.connect_signal(todo_edit, 'change', self.todo_desc_changed)
+        todo_cols = urwid.Columns(
+            [
+                todo_label,
+                todo_edit,
+            ]
+        )
+        return todo_cols
+
+
+    def ok_cancel_columns(self):
+        ok_btn = urwid.Button(u"Ok")
+        cancel_btn = urwid.Button(u"Cancel")
+
+        self.ok_button = ok_btn
+        self.cancel_button = cancel_btn
+
+        urwid.connect_signal(
+                self.ok_button,
+                'click',
+                lambda button:self._emit('close-ok')
+            )
+        urwid.connect_signal(
+                self.cancel_button,
+                'click',
+                lambda button:self._emit('close-cancel')
+            )
+ 
+        ok_btn_attr = urwid.AttrMap(ok_btn, None, focus_map='reversed')
+        cancel_btn_attr = urwid.AttrMap(cancel_btn, None, focus_map='reversed')
+
+        ok_cancel_cols = urwid.Columns([
+                (8, ok_btn_attr),
+                (10, cancel_btn_attr),
+            ],
+            dividechars=2,
+            focus_column=None,
+            min_width=1,
+            box_columns=None,
+        )
+        return ok_cancel_cols
+
+    def done_columns(self):
+        done_label = urwid.Text(u"Done: ")
+        done_group = []
+        done_yes = urwid.RadioButton(done_group, u"Finished")
+        done_no = urwid.RadioButton(done_group, u"Unfinished")
+        urwid.connect_signal(
+                done_yes,
+                'change',
+                self.on_done_yes_rdbtn_clicked
+        )
+        urwid.connect_signal(
+                done_no,
+                'change',
+                self.on_done_no_rdbtn_clicked
+        )
+        done_cols = urwid.Columns([
+            done_label,
+            done_yes,
+            done_no,
+        ])
+        return done_cols
+
+    def on_done_yes_rdbtn_clicked(self, user_data):
+        self.done = True
+
+    def on_done_no_rdbtn_clicked(self, user_data):
+        self.done = False
+
+    def priority_columns(self):
+        priority_group = []
+        priority_label = urwid.Text(u"Priority: ")
+        priority_high = urwid.RadioButton(priority_group, u"High")
+        priority_medium = urwid.RadioButton(priority_group, u"Medium")
+        priority_low = urwid.RadioButton(priority_group, u"Low")
+        urwid.connect_signal(
+                priority_high,
+                'change',
+                self.on_priority_high_clicked
+            )
+        urwid.connect_signal(
+                priority_medium,
+                'change',
+                self.on_priority_medium_clicked
+            )
+        urwid.connect_signal(
+                priority_low,
+                'change',
+                self.on_priority_low_clicked
+            )
+        priority_cols = urwid.Columns([
+            priority_label,
+            urwid.Text(u" "),
+            priority_high,
+            priority_medium,
+            priority_low,
+        ])
+        return priority_cols
+
+
+    def on_priority_high_clicked(self, user_data):
+        self.priority = 1
+
+    def on_priority_medium_clicked(self, user_data):
+        self.priority = 2
+
+
+    def on_priority_low_clicked(self, user_data):
+        self.priority = 3
+
+    def on_blocked_reason_changed(self, user_data):
+        self.blocked_reason = user_data
+        if self.blocked_reason == '':
+            self.blocked = False
+        else:
+            self.blocked = True
+
+
+    def blocked_columns(self):
+        blocked_label = urwid.Text(u"Blocked Reason: ")
+        blocked_edit = urwid.Edit()
+        blocked_cols = urwid.Columns(
+            [
+                blocked_label,
+                urwid.Text(u" "),
+                blocked_edit,
+            ]
+        )
+        return blocked_cols
 
 class TodoUI:
     def __init__(self, todos):
         self.Todos = todos
         self.filter_group = []
         self.filter = "NOT DONE"
+        self.detail_launcher = None
 
     def line_box(self, widget, caption="", align_title="center"):
         return urwid.LineBox(
@@ -60,7 +278,9 @@ class TodoUI:
         self.initialize_list_ui()
 
     def initialize_list_ui(self):
-        self.top.original_widget = self.todo_list_ui()
+        self.top = self.todo_list_ui()
+        LOG.info("in initialize_list self.top = {0}".format(self.top))
+        LOG.info("in initialize_list self.top.original_widget = {0}".format(self.top.original_widget))
 
     def on_init_list(self, t, e):
         self.initialize_list_ui()
@@ -69,7 +289,11 @@ class TodoUI:
         LOG.info("deleting todo with if {0}".format(user_data[0]))
         todo = self.Todos.get_by_id(user_data[0])
         self.Todos.delete(todo)
-        self.initialize_list_ui()
+        del self.top.original_widget.body.original_widget.widget_list[4].body[user_data[1]]
+        #self.initialize_list_ui()
+
+    def open_detail_popup():
+        pass
 
     def todo_detail_screen(self, widget=None, user_data=("new",)):
         """
@@ -145,11 +369,14 @@ class TodoUI:
         self.top.original_widget = urwid.Padding(topw, right=0, left=0)
 
     def filter_changed(self, widget, state):
+        LOG.info("filter changed")
         # breakpoint()
         if state:
+            LOG.info("changed filter to {0}".format(widget.label.upper()))
             self.filter = widget.label.upper()
-            self.initialize_list_ui()
-            self.set_filter_buttons()
+            self.load_filtered_todos()
+            #self.initialize_list_ui()
+            #self.set_filter_buttons()
 
     def filter_widget(self):
         # breakpoint()
@@ -234,7 +461,7 @@ class TodoUI:
         todo.done = new_state
         self.Todos.save(todo)
         self.initialize_list_ui()
-        self.set_filter_buttons()
+        #self.set_filter_buttons()
 
     def load_employees(self):
         print("loading employees")
@@ -242,11 +469,13 @@ class TodoUI:
     def draw_ui(self):
 
         self.top = self.todo_list_ui()
-
+        LOG.info('self.top = {0} '.format(self.top))
         return self.top
 
     def row_items(self, todo_list):
         retList = []
+        index = 0
+        self.detail_launcher = TodoDetailLauncher()
         for todo in todo_list:
             idCol = ('fixed',4, urwid.Text(str(todo.id), align="left"))
             doneCol = (
@@ -263,7 +492,7 @@ class TodoUI:
             editBtnCol = urwid.Button(
                 "Edit", self.todo_detail_screen, ("edit", todo.id)
             )
-            delBtnCol = urwid.Button("Delete", self.delete_todo, (todo.id,))
+            delBtnCol = urwid.Button("Delete", self.delete_todo, (todo.id, index))
             edit_btn_attr = urwid.AttrMap(editBtnCol, None, focus_map="reversed")
             del_btn_attr = urwid.AttrMap(delBtnCol, None, focus_map="reversed")
             cols = urwid.Columns(
@@ -287,6 +516,15 @@ class TodoUI:
                 ]
             )
             retList.append(row)
+            index += 1
+        
+        last_row = urwid.Columns([
+               urwid.Padding(urwid.Text("")),
+               urwid.Padding(urwid.Text("")),
+               urwid.Padding(urwid.Text("")),
+               urwid.Padding(self.detail_launcher),
+            ])
+        retList.append(last_row)
         return retList
 
     def get_filtered_todos(self):
@@ -305,8 +543,12 @@ class TodoUI:
         self.update_non_comp_count(len(nocomp_todos))
 
     def load_filtered_todos(self):
+        LOG.info("Loading filtered todos")
         todo_list = self.get_filtered_todos()
-        self.list_walker = urwid.SimpleFocusListWalker(self.row_items(todo_list))
+        row_items = self.row_items(todo_list)
+        self.top.original_widget.body.original_widget.widget_list[4].body = row_items
+        LOG.info(self.top.original_widget.body.original_widget.widget_list)
+        #self.list_walker = urwid.SimpleFocusListWalker(self.row_items(todo_list))
 
     def todo_list_ui(self):
         # breakpoint()
@@ -317,7 +559,7 @@ class TodoUI:
         self.update_non_comp_count(len(nocomp_todos))
         # making the list
         self.list_walker = urwid.SimpleFocusListWalker(self.row_items(todo_list))
-
+        #breakpoint()
         list_heading = urwid.Columns(
             [
                 (5, urwid.Text("Id", align="left")),
@@ -370,11 +612,18 @@ class TodoUI:
 
         return urwid.Padding(todo_ui, right=0, left=0)
 
+
+
+
     def handle_keys(self, key):
         if key == "q":
             raise urwid.ExitMainLoop()
         if key == "f8":
             raise urwid.ExitMainLoop()
+        if key == "o":
+            #breakpoint()
+            self.detail_launcher.keypress((15,), 'enter')
+        
 
         key_dict = {"l": self.load_employees, "n": self.todo_detail_screen}
 

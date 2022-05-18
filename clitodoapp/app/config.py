@@ -42,8 +42,8 @@ _CONFIG_DEFAULTS = {
         "formatters": {
             "generic": {
                 "()": "clitodoapp.app.logger.LogRecordFormatter",
-                "format": "%(asctime)s %(name)-20s: [%(levelname).1s]  %(message)s",
-                "datefmt": "%Y-%m-%d %H:%M:%S.%f %z",
+                "format": "%(name)-20s: [%(levelname).1s]  %(message)s",
+                "datefmt": "",
             },
         },
         "handlers": {

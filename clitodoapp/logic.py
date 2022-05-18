@@ -14,7 +14,4 @@ def run(parser) -> None:
         __version__,
     )
     todos = Todos("todos.db")
-    todo_ui = TodoUI(todos)
-    ui = todo_ui.draw_ui()
-    loop = urwid.MainLoop(ui, palette, unhandled_input=todo_ui.handle_keys)
-    loop.run()
+    TodoUI(todos).start()

@@ -1,0 +1,5 @@
+startup_message off
+
+screen -t NVIM nvim
+screen -t Python (source .venv/bin/activate) && python3
+screen -t Logs tail -f new-todo.log

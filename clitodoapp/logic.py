@@ -25,9 +25,7 @@ def run(parser) -> None:
                 ['Priority', args.priority],
                 ['Blocked', args.blocked],
             ]
-            print("The following item will be created:")
-            print("")
-            print(tabulate.tabulate(data))
+
             todos = Todos('todos.db')
             todo = Todo(args.new)
             todo.done = int(args.done)

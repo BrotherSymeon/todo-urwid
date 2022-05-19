@@ -73,9 +73,12 @@ class TodoUI:
 
     def delete_todo(self, widget, user_data):
         LOG.debug("deleting todo with if {0}".format(user_data[0]))
-        todo = self.Todos.get_by_id(user_data[0])
-        self.Todos.delete(todo)
-        self.load_filtered_todos()
+        try:
+            todo = self.Todos.get_by_id(user_data[0])
+            self.Todos.delete(todo)
+            self.load_filtered_todos()
+        except Exception as e:
+            LOG.error(e)
 
     def on_edit_dialog_ok_clicked(self, widget, user_args, todo_id=0):
         LOG.debug("on_edit_dialog_ok_clicked user_args={0}, widget={1}, todo_id={2}".format(user_args, widget, todo_id))

@@ -6,7 +6,7 @@ import pdb
 import logging
 
 from clitodoapp.models.todo import Db, Todos, Todo
-from clitodoapp.widgets.popups import TodoDetailDialog
+from clitodoapp.widgets.popups import TodoDetailDialog, OkDialog
 from clitodoapp.widgets.square_button import SquareButton
 from panwid.dialog import *
 
@@ -105,9 +105,11 @@ class TodoUI:
             self.reset_layout(self._body)
             if work_done:
                 self.load_filtered_todos()
+                self.ok_dialog("Congratulations!!", ["You have sucessfully edited\n","your first todo item"])
 
         except Exception as e:
             LOG.error(e)
+            self.ok_dialog("Error", ["Please contact you administrator"])
 
 
     def on_edit_dialog_cancel_clicked(self, widget, user_args, todo_id=0):
@@ -116,6 +118,28 @@ class TodoUI:
 
     def reset_layout(self, widget):
         self._loop.widget = widget
+   
+    def on_ok_clicked(self, widget):
+        self.reset_layout(self._body)
+        
+    def ok_dialog(self, title='', mesg=['']):
+        ok = OkDialog(title, mesg)
+        
+        urwid.connect_signal(
+            ok,
+            'ok-click',
+            self.on_ok_clicked
+        )
+
+        w = urwid.Overlay(
+                ok,
+                self._body,
+                'center', ok.width,
+                'middle', ok.height,
+            )
+
+        self._loop.widget = w
+        
 
     def todo_detail_screen(self, widget=None, user_data=("new",)):
         """

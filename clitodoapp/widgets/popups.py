@@ -1,11 +1,7 @@
 
 import urwid
 import sys
-import traceback
-import pdb
-
 import logging
-import sys
 
 LOG = logging.getLogger(__name__)
 
@@ -17,6 +13,57 @@ def eprint(*args, **kargs):
         sys.stderr.flush()
     else:
         LOG.info(*args, **kargs)
+
+
+class OkDialog(urwid.WidgetWrap):
+    signals = ['ok-click']
+    def __init__(self, title='', mesg=['']):
+        t = []
+        t.append(title)
+        t.extend(mesg)
+        self.width = self.maxlength(t) + 8
+        self.height = len(mesg) + 7
+        # Header
+        header_text = urwid.Text(('banner', title), align='center')
+        header = urwid.AttrMap(header_text, 'banner')
+
+        # Body
+        body_text = urwid.Text(mesg, align='center')
+        body_filler = urwid.Filler(body_text, valign='top')
+        body_padding = urwid.Padding(
+            body_filler,
+            left=1,
+            right=1
+        )
+        body = urwid.LineBox(body_padding)
+
+        # Footer
+        ok_btn = urwid.Button('Okay')
+        urwid.connect_signal(
+                ok_btn,
+                'click',
+                lambda button:self._emit('ok-click')
+            )
+        footer = urwid.AttrWrap(ok_btn, 'selectable', 'focus')
+        footer = urwid.GridFlow([footer], 8, 1, 1, 'right')
+
+        # Layout
+        layout = urwid.Frame(
+            body,
+            header = header,
+            footer = footer,
+            focus_part = 'footer'
+        )
+
+        self.__super.__init__(urwid.LineBox(layout))
+
+
+    def maxlength(self, mesg_array):
+        max = 0
+        for i in mesg_array:
+            if len(i) > max:
+                max = len(i)
+        return max
 
 class TodoDetailDialog(urwid.WidgetWrap):
     """A dialog that has controls to create or update a todo """
@@ -279,7 +326,7 @@ class TodoDetailLauncher(urwid.PopUpLauncher):
 
     def create_pop_up(self):
         LOG.info("TodoDetailLauncher: create_pop_up called")
-        pop_up = TodoDetailDialog()
+        pop_up = TodoDetailDialog("Todo Detail")
         urwid.connect_signal(
             pop_up,
             'close-ok',
@@ -304,10 +351,100 @@ class TodoDetailLauncher(urwid.PopUpLauncher):
         LOG.info("TodoDetailLauncher: get_pop_up_parameter called")
         return {'left':-5, 'top':1, 'overlay_width':60, 'overlay_height':8}
 
+class SimpleLayout():
+    _palette = [
+        ('banner', 'black', 'light gray'),
+        ('selectable', 'white', 'black'),
+        ('focus', 'black', 'light gray')
+    ]
+
+    def __init__(self):
+        self._body = self.body()
+        self._loop = urwid.MainLoop(
+            self._body,
+            self._palette,
+            unhandled_input=self.handle_keys
+        )
+
+    def reset_layout(self, widget):
+        self._loop.widget = widget
+
+    def body(self):
+        raise Exception("you have to overload this")
+
+    def handle_keys(self, key):
+        raise Exception("you have to overload this")
+
+    def start(self):
+        self._loop.run()
+
+
+class OpenOkDialogScreen(SimpleLayout):
+    """
+        This is just to test out the OkDialog
+    """
+
+    def body(self):
+
+        header_label = urwid.Text("Simple Screen", align="center")
+        header = urwid.Pile([header_label], focus_item=None)
+        head_final_widget = urwid.LineBox(header)
+
+        body = urwid.LineBox(urwid.Padding(urwid.Filler(urwid.Text(''))))
+
+        footer_text = (
+            "foot",
+            [
+                "Simple Footer ",
+                ("key", "F8"),
+                " quit    ",
+                ("key", "o"),
+                " open okDialog",
+            ],
+        )
+        footer = urwid.AttrMap(urwid.Text(footer_text), "foot")
+        simple_ui = urwid.Frame(
+            body, header=head_final_widget, footer=footer, focus_part="body"
+        )
+
+        return urwid.Padding(simple_ui, right=0, left=0)
+
+
+    def on_ok_clicked(self, widget):
+        self.reset_layout(self._body)
+
+
+    def open_ok_dialog(self):
+        ok = OkDialog("hello", ["This is a line\n", "\n", "and this is a line\n", "\n", "So Cool\n"])
+
+        urwid.connect_signal(
+            ok,
+            'ok-click',
+            self.on_ok_clicked
+        )
+
+        w = urwid.Overlay(
+                ok,
+                self._body,
+                'center', ok.width,
+                'middle', ok.height,
+            )
+
+        self._loop.widget = w
+
+
+    def handle_keys(self, key):
+        if key == 'f8':
+            raise urwid.ExitMainLoop()
+        if key == 'o':
+            self.open_ok_dialog()
 
 
 
-if __name__ == "__main__":
+def run_ok_dialog_ui():
+    OpenOkDialogScreen().start()
+
+def run_todo_detai_ui():
     fill = urwid.Filler(urwid.Padding(TodoDetailLauncher(),'center', 15))
     loop = urwid.MainLoop(
             fill,
@@ -315,3 +452,19 @@ if __name__ == "__main__":
             pop_ups=True
         )
     loop.run()
+
+
+if __name__ == "__main__":
+    menu = [
+        "1. Run Todo Detail UI",
+        "2. Run OkDialog UI",
+            ]
+    for i in menu:
+        print(i)
+
+    selection = int(input("What now>"))
+    if selection == 1:
+        run_todo_detai_ui()
+    else:
+        run_ok_dialog_ui()
+

@@ -1,7 +1,7 @@
 import logging
 
 from clitodoapp.app.version import __version__
-from clitodoapp.ui import TodoUI, Todos, Todo, palette
+from clitodoapp.ui import TodoUI, Todos, TodoData, palette
 import tabulate
 import urwid
 
@@ -26,9 +26,8 @@ def run(parser) -> None:
                 ['Blocked', args.blocked],
             ]
 
-            todos = Todos('todos.db')
-            todo = Todo(args.new)
-            todo.done = int(args.done)
+            todos = Todos()
+            todo = TodoData(desc=args.new, done=args.done, priority=args.priority)
             todos.save(todo)
 
             print("You todo was saved!")
@@ -41,5 +40,5 @@ def run(parser) -> None:
     else:
         # else
         # run the TUI
-        todos = Todos("todos.db")
+        todos = Todos()
         TodoUI(todos).start()

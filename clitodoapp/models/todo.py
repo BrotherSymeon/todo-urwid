@@ -1,134 +1,113 @@
-import sqlite3
 import collections
-
-
+import datetime
 import logging
+
+
+from peewee import Model, CharField, BooleanField, IntegerField, DateTimeField
+from clitodoapp.models.db import db
+
 
 LOG = logging.getLogger(__name__)
 
 
-class Db:
-    def __init__(self, file_path):
-        LOG.info("initializing Db")
-        self.conn = None
-        try:
-            self.conn = sqlite3.connect(file_path)
-            self.conn.row_factory = sqlite3.Row
-        except sqlite3.Error as e:
-            LOG.error(e.args[0])
-            raise sqlite3.Error(e)
-        self.cur = self.conn.cursor()
-        # cur.execute("create table todos(id, todo, done);")
+def create_tables():
+    with db:
+        db.create_tables([Todo])
 
 
-    def init_db(self):
-        """initialize the db"""
-        try:
-            LOG.info("testing whether or not there is a todo table yet")
-            self.cur.execute("select * from todos;")
-            LOG.info("the todo table seems to be in existance")
-        except sqlite3.Error as e:
-            LOG.info("maybe no todo table: trying to create one")
-            try:
-                self.cur.execute(
-                    "create table todos(id integer primary key AUTOINCREMENT, todo varchar, done bit);"
-                )
-                self.cur.execute("select * from todos;")
-            except Exception as e:
-                raise Exception("something went wrong initializing the db")
+class BaseModel(Model):
+    class Meta:
+        database = db
 
 
-class Todos(Db):
-    SQL_SELECT_BY_ID = "select id, todo, done from todos where id ==(?);"
-    SQL_SELECT_ALL = "select id, todo, done from todos;"
-    SQL_SELECT_DONE = "select id, todo, done from todos where done=1;"
-    SQL_SELECT_NOT_DONE = "select id, todo, done from todos where done=0;"
-    SQL_UPDATE_BY_ID = "update todos set todo=?,done=? where id=?;"
-    SQL_SELECT_LAST_INSERTED = "select id, todo, done from todos where"
-    SQL_SELECT_LAST_INSERTED += " id=last_insert_rowid();"
-    SQL_INSERT_TODO = "insert into todos(todo, done)values(?,?);"
-    SQL_DELETE_BY_ID = "delete from todos where id = ?;"
+class Todo(BaseModel):
+    desc = CharField()
+    done = BooleanField(default=False)
+    priority = IntegerField(choices=[(1, "High"), (2, "Medium"), (3, "Low")], default=2)
+    blocked_reason = CharField(default='')
+    created_date = DateTimeField(default=datetime.datetime.now)
 
-    def __init__(self, db_path):
-        super().__init__(db_path)
-        self.init_db()
 
-    def __str__(self):
-        return "Todo(id={0}, todo={1}, done={2})".format(self.id, self.todo, bool(self.done))
 
+class TodoData:
+    """This is used to pass data back and forth so that
+    the controller or view are not working with classes that can update the database"""
+    def __init__(self, id=None, desc=None, done=False, priority=2, blocked_reason=''):
+        self.desc = desc
+        self.done = done
+        self.priority = priority
+        self.blocked_reason = blocked_reason
+        self.blocked = bool(len(self.blocked_reason))
+        self.id = id
+
+    def __repr__(self):
+        priority_map = {1:"High", 2:"Medium", 3:"Low"}
+        return "TodoData(id={0}, todo={1}, done={2}, priority={3}, blocked={4})".format(
+            self.id, self.desc, bool(self.done), priority_map[self.priority], self.blocked
+        )
+
+
+class Todos:
+    """This is the Repository"""
     def new(self, desc):
-        todo = Todo(desc)
-        self.save(todo)
-        return todo
+        return Todo.create(desc=desc, done=False, priority=2, blocked_reason='')
+
+    def convert_all(self, todo_table_list):
+        """convert each Todo obj into a Todo obj"""
+        ret_list = []
+        for todo_table in todo_table_list:
+            todo = TodoData(
+                id=todo_table.id,
+                desc=todo_table.desc,
+                done=todo_table.done,
+                priority=todo_table.priority,
+                blocked_reason=todo_table.blocked_reason
+            )
+            ret_list.append(todo)
+        return ret_list
 
     def get_by_id(self, id):
-        self.cur.execute(Todos.SQL_SELECT_BY_ID, (id,))
-        for row in self.cur:
-            todo = Todo(row["todo"])
-            todo.id = row["id"]
-            todo.done = bool(row["done"])
-        return todo
+        return Todo.get(Todo.id == id)
 
-    def get_records(self, cur):
-        all_todos = []
-        for row in cur:
-            todo = Todo(row["todo"])
-            todo.id = row["id"]
-            todo.done = bool(row["done"])
-            all_todos.append(todo)
-
-        return all_todos
+    def delete_by_id(self, id):
+        """deletes a Todo from the database"""
+        todo = self.get_by_id(id)
+        return todo.delete_instance()
 
     def get_done(self):
-        self.cur.execute(Todos.SQL_SELECT_DONE)
-        return self.get_records(self.cur)
+        return self.convert_all(Todo.select().where(Todo.done == True))
 
     def get_not_done(self):
-        self.cur.execute(Todos.SQL_SELECT_NOT_DONE)
-        return self.get_records(self.cur)
+        return self.convert_all(Todo.select().where(Todo.done == False))
 
     def get_all(self):
         """gets all of the todos from the database"""
-        self.cur.execute(Todos.SQL_SELECT_ALL)
-        return self.get_records(self.cur)
+        return self.convert_all(Todo.select())
 
     def save(self, todo):
-        """creates or updates the current todo to the db
-        >>t = Todo('Go to the store')
-        >>ts = Todos()
-        >>ts.save(t)
-        >>all = Todos.get_all()
-        """
-        if todo.id != None:
-            self.cur.execute(
-                Todos.SQL_UPDATE_BY_ID,
-                (todo.todo, int(todo.done), todo.id),
-            )
-            self.conn.commit()
+        """creates or updates the current todo to the db"""
+        return_val = 0
+        if todo.id:
+            todo_record = self.get_by_id(todo.id)
+            todo_record.desc = todo.desc
+            todo_record.done = todo.done
+            todo_record.priority = todo.priority
+            todo_record.blocked_reason = todo.blocked_reason
+            return_val = todo_record.save()
+            todo.id = todo_record.id
+            return return_val
         else:
+            todo_record = Todo.create(
+                    desc=todo.desc,
+                    done=todo.done,
+                    priority=todo.priority,
+                    blocked_reason=todo.blocked_reason
+                )
+            return_val = todo_record.save()
+            todo.id = todo_record.id
+            return return_val
 
-            self.cur.execute(
-                Todos.SQL_INSERT_TODO,
-                (todo.todo, int(todo.done)),
-            )
-            self.conn.commit()
-            self.cur.execute(Todos.SQL_SELECT_LAST_INSERTED)
-            for row in self.cur:
-                todo.id = row["id"]
 
     def delete(self, todo):
-        """deletes a Todo from the database"""
-        self.cur.execute(Todos.SQL_DELETE_BY_ID, (todo.id,))
-        self.conn.commit()
-
-
-class Todo:
-    def __init__(self, desc):
-        self.todo = desc
-        self.done = False
-        self.id = None
-
-    def __repr__(self):
-        return "Todo(id={0}, todo={1}, done={2})".format(
-            self.id, self.todo, bool(self.done)
-        )
+        """Depricated: use delete_by_id instead"""
+        return Todo.delete().where(Todo.id == todo.id)

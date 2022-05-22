@@ -5,7 +5,7 @@ import pdb
 
 import logging
 
-from clitodoapp.models.todo import Db, Todos, Todo
+from clitodoapp.models.todo import Todos, TodoData
 from clitodoapp.widgets.popups import TodoDetailDialog, OkDialog
 from clitodoapp.widgets.square_button import SquareButton
 from panwid.dialog import *
@@ -72,32 +72,46 @@ class TodoUI:
 
 
     def delete_todo(self, widget, user_data):
-        LOG.debug("deleting todo with if {0}".format(user_data[0]))
+        LOG.debug("deleting todo with id {0}".format(user_data[0]))
         try:
-            todo = self.Todos.get_by_id(user_data[0])
-            self.Todos.delete(todo)
-            self.load_filtered_todos()
+            done = self.Todos.delete_by_id(user_data[0])
+            if done:
+                self.load_filtered_todos()
+            else:
+                LOG.info("The todo was not deleted from the database")
+                self.ok_dialog(
+                        "Warning.",
+                        [
+                            "The todo was not deleted from the database\n",
+                            "Please contact you system Administrator"
+                        ]
+                    )
         except Exception as e:
             LOG.error(e)
 
     def on_edit_dialog_ok_clicked(self, widget, user_args, todo_id=0):
-        LOG.debug("on_edit_dialog_ok_clicked user_args={0}, widget={1}, todo_id={2}".format(user_args, widget, todo_id))
+        mesg = "on_edit_dialog_ok_clicked user_args={0}, widget={1}, todo_id={2}"
+        LOG.debug(
+                mesg.format(user_args, widget, todo_id)
+            )
         try:
-
+            breakpoint()
             work_done = False
             if len(user_args) == 1:
+                LOG.info('on_edit_dialog_ok_cliked: This is a new todo')
                 # this is a new todo
                 if len(widget.get_description()) > 0:
-                    t = Todo(widget.get_description())
+                    t = TodoData(desc=widget.get_description())
                     t.done = int(widget.get_done())
                     self.Todos.save(t)
                     work_done = True
 
             else:
                 # this is an existing todo and we are editing it
+                LOG.info('on_edit_dialog_ok_cliked: This is an existing todo')
                 if len(widget.get_description()) > 0:
                     t = self.Todos.get_by_id(user_args[1])
-                    t.todo = widget.get_description()
+                    t.desc = widget.get_description()
                     t.done = int(widget.get_done())
                     self.Todos.save(t)
                     work_done = True
@@ -153,7 +167,7 @@ class TodoUI:
                 return ""
             else:
                 todo = self.Todos.get_by_id(user_data[1])
-                return todo.todo
+                return todo.desc
             pass
 
         try:
@@ -171,7 +185,7 @@ class TodoUI:
 
             if todo:
                 self.edit_dialog.set_done(todo.done)
-                self.edit_dialog.set_description(todo.todo)
+                self.edit_dialog.set_description(todo.desc)
             # hook up the close-ok and close-cancel events
             urwid.connect_signal(
                     self.edit_dialog,
@@ -305,7 +319,7 @@ class TodoUI:
                 user_data=(todo,),
             ),
         )
-        todoCol = ("weight", 4, urwid.Text(todo.todo, align="left"))
+        todoCol = ("weight", 4, urwid.Text(todo.desc, align="left"))
         editBtnCol = SquareButton(
             "Edit", self.todo_detail_screen, ("edit", todo.id, index)
         )

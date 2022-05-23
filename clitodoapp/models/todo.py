@@ -31,17 +31,26 @@ class Todo(BaseModel):
 
 class TodoData:
     """This is used to pass data back and forth so that
-    the controller or view are not working with classes that can update the database"""
+    the controller or view are not working with classes 
+    that can update the database
+    """
+    PRIORITIES = {"HIGH":3, "MEDIUM":2, "LOW": 1}
+
     def __init__(self, id=None, desc=None, done=False, priority=2, blocked_reason=''):
-        self.desc = desc
+        self.desc = desc if desc is not None else ''
+        if self.desc == '':
+            raise ValueError('desc can not be an empty string')
         self.done = done
         self.priority = priority
         self.blocked_reason = blocked_reason
         self.blocked = bool(len(self.blocked_reason))
-        self.id = id
+        try:
+            self.id = int(id) if id is not None else 0
+        except ValueError as e:
+            raise ValueError('id must be an integer')
 
     def __repr__(self):
-        priority_map = {1:"High", 2:"Medium", 3:"Low"}
+        priority_map = {3:"High", 2:"Medium", 1:"Low"}
         return "TodoData(id={0}, todo={1}, done={2}, priority={3}, blocked={4})".format(
             self.id, self.desc, bool(self.done), priority_map[self.priority], self.blocked
         )
@@ -50,19 +59,30 @@ class TodoData:
 class Todos:
     """This is the Repository"""
     def new(self, desc):
-        return Todo.create(desc=desc, done=False, priority=2, blocked_reason='')
+        return self.convert_single(
+                Todo.create(
+                    desc=desc,
+                    done=False,
+                    priority=2,
+                    blocked_reason=''
+                )
+            )
+
+    def convert_single(self, todo):
+        ret_todo = TodoData(
+                    id=todo.id,
+                    desc=todo.desc,
+                    done=todo.done,
+                    priority=todo.priority,
+                    blocked_reason=todo.blocked_reason
+                )
+        return ret_todo
 
     def convert_all(self, todo_table_list):
         """convert each Todo obj into a Todo obj"""
         ret_list = []
         for todo_table in todo_table_list:
-            todo = TodoData(
-                id=todo_table.id,
-                desc=todo_table.desc,
-                done=todo_table.done,
-                priority=todo_table.priority,
-                blocked_reason=todo_table.blocked_reason
-            )
+            todo = self.convert_single(todo_table)
             ret_list.append(todo)
         return ret_list
 

@@ -1,56 +1,69 @@
-from clitodoapp.models.todo import Db, Todo, Todos
-import logging
+from clitodoapp.models.todo import Todo, TodoData, Todos
+from unittest.mock import patch
+import unittest
+from peewee import SqliteDatabase
 
-logging.basicConfig(filename="test.log", level=logging.DEBUG)
+MODELS = [Todo]
 
-logging.debug("ok we are starting testing")
+# use an in-memory SQLite for tests.
+test_db = SqliteDatabase(':memory:')
 
+class BaseTestCase(unittest.TestCase):
+    def setUp(self):
+        # Bind model classes to test db. Since we have a complete list of
+        # all models, we do not need to recursively bind dependencies.
+        test_db.bind(MODELS, bind_refs=False, bind_backrefs=False)
 
-def test_db_exists():
-    db = Db(":memory:")
-    assert db != None
+        test_db.connect()
+        test_db.create_tables(MODELS)
 
+    def tearDown(self):
+        # Not strictly necessary since SQLite in-memory databases only live
+        # for the duration of the connection, and in the next step we close
+        # the connection...but a good practice all the same.
+        test_db.drop_tables(MODELS)
 
-def test_db_can_init():
-    db = Db(":memory:")
-    db.init_db()
+        # Close connection to db.
+        test_db.close()
 
+        # If we wanted, we could re-bind the models to their original
+        # database here. But for tests this is probably not necessary.
 
-def test_todos_can_create_todo():
-    ts = Todos(":memory:")
-    todo = ts.new("Get some breakfast")
-    assert type(todo) == Todo
-    assert todo.todo == "Get some breakfast"
-    assert todo.done == False
-    assert todo.id != None
+class DatabaseTestCase(BaseTestCase):
 
-
-def test_todos_can_insert_todo():
-    ts = Todos(":memory:")
-    todo = ts.new("Get some breakfast")
-    assert type(todo) == Todo
-    assert todo.todo == "Get some breakfast"
-    assert todo.done == False
-    assert todo.id != None
-    todo.todo = "something different"
-    ts.save(todo)
-    assert todo.todo == "something different"
-
-
-def test_todos_can_get_by_id():
-    ts = Todos(":memory:")
-    todo = ts.new("Get some breakfast")
-    todo2 = ts.get_by_id(todo.id)
-    assert todo.id == todo2.id
-    assert todo.todo == todo2.todo
-    assert todo.done == todo2.done
+    def test_todos_can_create_todo(self):
+        ts = Todos()
+        todo = ts.new("Get some breakfast")
+        assert type(todo) == TodoData
+        assert todo.desc == "Get some breakfast"
+        assert todo.done == False
+        assert todo.id != None
 
 
-def test_todos_can_get_all():
-    ts = Todos(":memory:")
-    todo = ts.new("Get some breakfast")
-    todo2 = ts.new("Get some breakfast")
-    todo3 = ts.new("Get some breakfast")
-    todo4 = ts.new("Get some breakfast")
-    todoList = ts.get_all()
-    assert len(todoList) == 4
+    def test_todos_can_insert_todo(self):
+        ts = Todos()
+        todo = ts.new("Get some breakfast")
+        assert type(todo) == TodoData
+        assert todo.desc == "Get some breakfast"
+        assert todo.done == False
+        assert todo.id != None
+        todo.desc = "something different"
+        ts.save(todo)
+        assert todo.desc == "something different"
+
+
+    def test_todos_can_get_by_id(self):
+        ts = Todos()
+        todo = ts.new("Get some breakfast")
+        todo2 = ts.get_by_id(todo.id)
+        assert todo.id == todo2.id
+        assert todo.desc == todo2.desc
+        assert todo.done == todo2.done
+
+    def test_todos_can_get_all(self):
+        ts = Todos()
+        todo = ts.new("Get some breakfast")
+        todo1 = ts.new("Get some breakfast")
+        todo2 = ts.new("Get some breakfast")
+        todoList = ts.get_all()
+        assert len(todoList) == 3 # stupid test

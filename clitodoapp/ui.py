@@ -20,14 +20,13 @@ palette = [
     ("b", "black", "dark gray"),
     ("highlight", "black", "light blue"),
     ("bg", "black", "dark blue"),
-    ('popbg', 'white', 'dark blue'),
+    ("popbg", "white", "dark blue"),
 ]
-
-
 
 
 class TodoUI:
     """Our main view"""
+
     palette = [
         ("reversed", "standout", ""),
         ("foot", "light gray", "dark blue", "bold"),
@@ -35,7 +34,7 @@ class TodoUI:
         ("b", "black", "dark gray"),
         ("highlight", "black", "light blue"),
         ("bg", "black", "dark blue"),
-        ('popbg', 'light gray', 'default'),
+        ("popbg", "light gray", "default"),
     ]
 
     def __init__(self, todos):
@@ -45,15 +44,12 @@ class TodoUI:
         self._body = self.todo_list_ui()
         self.update_header_counts()
         self._loop = urwid.MainLoop(
-                self._body,
-                self.palette,
-                unhandled_input=self.handle_keys
-            )
+            self._body, self.palette, unhandled_input=self.handle_keys
+        )
 
     def start(self):
         """starts the main loop for the view"""
         self._loop.run()
-
 
     def line_box(self, widget, caption="", align_title="center"):
         return urwid.LineBox(
@@ -70,7 +66,6 @@ class TodoUI:
             brcorner="┘",
         )
 
-
     def delete_todo(self, widget, user_data):
         LOG.debug("deleting todo with id {0}".format(user_data[0]))
         try:
@@ -80,25 +75,23 @@ class TodoUI:
             else:
                 LOG.info("The todo was not deleted from the database")
                 self.ok_dialog(
-                        "Warning.",
-                        [
-                            "The todo was not deleted from the database\n",
-                            "Please contact you system Administrator"
-                        ]
-                    )
+                    "Warning.",
+                    [
+                        "The todo was not deleted from the database\n",
+                        "Please contact you system Administrator",
+                    ],
+                )
         except Exception as e:
             LOG.error(e)
 
     def on_edit_dialog_ok_clicked(self, widget, user_args, todo_id=0):
         mesg = "on_edit_dialog_ok_clicked user_args={0}, widget={1}, todo_id={2}"
-        LOG.debug(
-                mesg.format(user_args, widget, todo_id)
-            )
+        LOG.debug(mesg.format(user_args, widget, todo_id))
         try:
             breakpoint()
             work_done = False
             if len(user_args) == 1:
-                LOG.info('on_edit_dialog_ok_cliked: This is a new todo')
+                LOG.info("on_edit_dialog_ok_cliked: This is a new todo")
                 # this is a new todo
                 if len(widget.get_description()) > 0:
                     t = TodoData(desc=widget.get_description())
@@ -108,7 +101,7 @@ class TodoUI:
 
             else:
                 # this is an existing todo and we are editing it
-                LOG.info('on_edit_dialog_ok_cliked: This is an existing todo')
+                LOG.info("on_edit_dialog_ok_cliked: This is an existing todo")
                 if len(widget.get_description()) > 0:
                     t = self.Todos.get_by_id(user_args[1])
                     t.desc = widget.get_description()
@@ -119,41 +112,44 @@ class TodoUI:
             self.reset_layout(self._body)
             if work_done:
                 self.load_filtered_todos()
-                self.ok_dialog("Congratulations!!", ["You have sucessfully edited\n","your first todo item"])
+                self.ok_dialog(
+                    "Congratulations!!",
+                    ["You have sucessfully edited\n", "your first todo item"],
+                )
 
         except Exception as e:
             LOG.error(e)
             self.ok_dialog("Error", ["Please contact you administrator"])
 
-
     def on_edit_dialog_cancel_clicked(self, widget, user_args, todo_id=0):
-        LOG.info("on_edit_dialog_cancel_clicked args={0}".format((widget, user_args, todo_id)))
+        LOG.info(
+            "on_edit_dialog_cancel_clicked args={0}".format(
+                (widget, user_args, todo_id)
+            )
+        )
         self.reset_layout(self._body)
 
     def reset_layout(self, widget):
         self._loop.widget = widget
-   
+
     def on_ok_clicked(self, widget):
         self.reset_layout(self._body)
-        
-    def ok_dialog(self, title='', mesg=['']):
+
+    def ok_dialog(self, title="", mesg=[""]):
         ok = OkDialog(title, mesg)
-        
-        urwid.connect_signal(
-            ok,
-            'ok-click',
-            self.on_ok_clicked
-        )
+
+        urwid.connect_signal(ok, "ok-click", self.on_ok_clicked)
 
         w = urwid.Overlay(
-                ok,
-                self._body,
-                'center', ok.width,
-                'middle', ok.height,
-            )
+            ok,
+            self._body,
+            "center",
+            ok.width,
+            "middle",
+            ok.height,
+        )
 
         self._loop.widget = w
-        
 
     def todo_detail_screen(self, widget=None, user_data=("new",)):
         """
@@ -175,7 +171,6 @@ class TodoUI:
             if len(user_data) > 1:
                 todo = self.Todos.get_by_id(user_data[1])
 
-
             title = "Edit Todo"
 
             if user_data[0] == "new":
@@ -188,24 +183,16 @@ class TodoUI:
                 self.edit_dialog.set_description(todo.desc)
             # hook up the close-ok and close-cancel events
             urwid.connect_signal(
-                    self.edit_dialog,
-                    'close-ok',
-                    self.on_edit_dialog_ok_clicked,
-                    user_data
-                )
+                self.edit_dialog, "close-ok", self.on_edit_dialog_ok_clicked, user_data
+            )
             urwid.connect_signal(
-                    self.edit_dialog,
-                    'close-cancel',
-                    self.on_edit_dialog_cancel_clicked,
-                    user_data
-                )
+                self.edit_dialog,
+                "close-cancel",
+                self.on_edit_dialog_cancel_clicked,
+                user_data,
+            )
 
-            w = urwid.Overlay(
-                    self.edit_dialog,
-                    self._body,
-                    "center", 60,
-                    "middle", 8
-                )
+            w = urwid.Overlay(self.edit_dialog, self._body, "center", 60, "middle", 8)
             self._loop.widget = w
 
         except Exception as e:
@@ -218,8 +205,8 @@ class TodoUI:
             LOG.info("changed filter to {0}".format(widget.label.upper()))
             self.filter = widget.label.upper()
             self.load_filtered_todos()
-            #self.initialize_list_ui()
-            #self.set_filter_buttons()
+            # self.initialize_list_ui()
+            # self.set_filter_buttons()
 
     def filter_widget(self):
         # breakpoint()
@@ -245,9 +232,9 @@ class TodoUI:
             self.set_filter_buttons()
             cols = urwid.Columns(
                 [
-                    ('weight', 1, self.filter_not_done),
-                    ('weight', 1, self.filter_done),
-                    ('weight', 1, self.filter_all),
+                    ("weight", 1, self.filter_not_done),
+                    ("weight", 1, self.filter_done),
+                    ("weight", 1, self.filter_all),
                 ],
                 dividechars=0,
                 focus_column=None,
@@ -308,9 +295,9 @@ class TodoUI:
         print("loading employees")
 
     def row_item(self, todo, index):
-        idCol = ('fixed',4, urwid.Text(str(todo.id), align="left"))
+        idCol = ("fixed", 4, urwid.Text(str(todo.id), align="left"))
         doneCol = (
-            'fixed',
+            "fixed",
             6,
             urwid.CheckBox(
                 "",
@@ -349,8 +336,6 @@ class TodoUI:
 
         return row
 
-
-
     def row_items(self, todo_list):
         retList = []
         index = 0
@@ -386,7 +371,7 @@ class TodoUI:
 
     def todo_list_ui(self):
         """
-            creates the initial view
+        creates the initial view
         """
         LOG.info("createing initial view in todo_list_ui")
         # this should be daone after the view is built
@@ -397,7 +382,7 @@ class TodoUI:
         # making the list
         self.list_walker = urwid.SimpleFocusListWalker(self.row_items(todo_list))
 
-        #breakpoint()
+        # breakpoint()
         list_heading = urwid.Columns(
             [
                 (5, urwid.Text("Id", align="left")),
@@ -450,15 +435,11 @@ class TodoUI:
 
         return urwid.Padding(todo_ui, right=0, left=0)
 
-
-
-
     def handle_keys(self, key):
         if key == "q":
             raise urwid.ExitMainLoop()
         if key == "f8":
             raise urwid.ExitMainLoop()
-        
 
         key_dict = {"l": self.load_employees, "n": self.todo_detail_screen}
 
@@ -482,4 +463,3 @@ if __name__ == "__main__":
 
     todos = Todos("todo.db")
     TodoUI(todos).start()
-

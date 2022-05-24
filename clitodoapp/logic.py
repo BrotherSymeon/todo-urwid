@@ -20,10 +20,10 @@ def run(parser) -> None:
         # add a todo
         try:
             data = [
-                ['Description', args.new],
-                ['Done', args.done],
-                ['Priority', args.priority],
-                ['Blocked', args.blocked],
+                ["Description", args.new],
+                ["Done", args.done],
+                ["Priority", args.priority],
+                ["Blocked", args.blocked],
             ]
 
             todos = Todos()

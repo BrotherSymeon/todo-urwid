@@ -1,4 +1,3 @@
-
 import urwid
 import sys
 import logging
@@ -16,47 +15,34 @@ def eprint(*args, **kargs):
 
 
 class OkDialog(urwid.WidgetWrap):
-    signals = ['ok-click']
-    def __init__(self, title='', mesg=['']):
+    signals = ["ok-click"]
+
+    def __init__(self, title="", mesg=[""]):
         t = []
         t.append(title)
         t.extend(mesg)
         self.width = self.maxlength(t) + 8
         self.height = len(mesg) + 7
         # Header
-        header_text = urwid.Text(('banner', title), align='center')
-        header = urwid.AttrMap(header_text, 'banner')
+        header_text = urwid.Text(("banner", title), align="center")
+        header = urwid.AttrMap(header_text, "banner")
 
         # Body
-        body_text = urwid.Text(mesg, align='center')
-        body_filler = urwid.Filler(body_text, valign='top')
-        body_padding = urwid.Padding(
-            body_filler,
-            left=1,
-            right=1
-        )
+        body_text = urwid.Text(mesg, align="center")
+        body_filler = urwid.Filler(body_text, valign="top")
+        body_padding = urwid.Padding(body_filler, left=1, right=1)
         body = urwid.LineBox(body_padding)
 
         # Footer
-        ok_btn = urwid.Button('Okay')
-        urwid.connect_signal(
-                ok_btn,
-                'click',
-                lambda button:self._emit('ok-click')
-            )
-        footer = urwid.AttrWrap(ok_btn, 'selectable', 'focus')
-        footer = urwid.GridFlow([footer], 8, 1, 1, 'right')
+        ok_btn = urwid.Button("Okay")
+        urwid.connect_signal(ok_btn, "click", lambda button: self._emit("ok-click"))
+        footer = urwid.AttrWrap(ok_btn, "selectable", "focus")
+        footer = urwid.GridFlow([footer], 8, 1, 1, "right")
 
         # Layout
-        layout = urwid.Frame(
-            body,
-            header = header,
-            footer = footer,
-            focus_part = 'footer'
-        )
+        layout = urwid.Frame(body, header=header, footer=footer, focus_part="footer")
 
         self.__super.__init__(urwid.LineBox(layout))
-
 
     def maxlength(self, mesg_array):
         max = 0
@@ -65,12 +51,15 @@ class OkDialog(urwid.WidgetWrap):
                 max = len(i)
         return max
 
+
 class TodoDetailDialog(urwid.WidgetWrap):
-    """A dialog that has controls to create or update a todo """
-    signals = ['close-ok', 'close-cancel']
+    """A dialog that has controls to create or update a todo"""
+
+    signals = ["close-ok", "close-cancel"]
+
     def __init__(self, title):
         # the description of the todo
-        self.todo_desc = ''
+        self.todo_desc = ""
         # done or not this is set when the user clicks the radiobutton
         self.done = False
         # priority of the todo 1, 2 or 3. this is set when the user clicks the radiobutton
@@ -78,7 +67,7 @@ class TodoDetailDialog(urwid.WidgetWrap):
         # if its blocked or not. this is set when the user clicks the radiobutton
         self.blocked = False
         # reason for the blockage. this is set when the user clicks the radiobutton
-        self.blocked_reason = ''
+        self.blocked_reason = ""
 
         try:
             todo_cols = self.todo_colums()
@@ -86,18 +75,20 @@ class TodoDetailDialog(urwid.WidgetWrap):
             priority_cols = self.priority_columns()
             blocked_cols = self.blocked_columns()
             ok_cancel_cols = self.ok_cancel_columns()
-            pile = urwid.Pile([
-                todo_cols,
-                done_cols,
-                priority_cols,
-                blocked_cols,
-                urwid.Text(" "),
-                ok_cancel_cols
-            ])
+            pile = urwid.Pile(
+                [
+                    todo_cols,
+                    done_cols,
+                    priority_cols,
+                    blocked_cols,
+                    urwid.Text(" "),
+                    ok_cancel_cols,
+                ]
+            )
             pile = self.line_box(pile, title)
             fill = urwid.Filler(pile)
 
-            self.__super.__init__(urwid.AttrWrap(fill, 'popbg'))
+            self.__super.__init__(urwid.AttrWrap(fill, "popbg"))
         except Exception as e:
             LOG.error(e)
 
@@ -108,8 +99,9 @@ class TodoDetailDialog(urwid.WidgetWrap):
         else:
             self.done_yes.set_state(False)
             self.done_no.set_state(True)
+
     def get_done_state(self):
-        for l in  self.done_group:
+        for l in self.done_group:
             if l.state == True:
                 return l.label
 
@@ -119,7 +111,6 @@ class TodoDetailDialog(urwid.WidgetWrap):
         else:
             return False
 
-
     def set_description(self, desc):
         self.todo_edit.set_edit_text(desc)
         self.todo_desc = desc
@@ -128,34 +119,32 @@ class TodoDetailDialog(urwid.WidgetWrap):
         return self.todo_edit.get_edit_text()
 
     def line_box(self, widget, caption="", align_title="center"):
-            return urwid.LineBox(
-                widget,
-                title=caption,
-                title_align=align_title,
-                tlcorner="┌",
-                tline="─",
-                lline="│",
-                trcorner="┐",
-                blcorner="└",
-                rline="│",
-                bline="─",
-                brcorner="┘",
-            )
+        return urwid.LineBox(
+            widget,
+            title=caption,
+            title_align=align_title,
+            tlcorner="┌",
+            tline="─",
+            lline="│",
+            trcorner="┐",
+            blcorner="└",
+            rline="│",
+            bline="─",
+            brcorner="┘",
+        )
 
-
-    def todo_desc_changed(self, widget,  data,  user_data=None):
-        """ set the todo_desc"""
-        eprint('todo_dec_changed: data = {0}'.format(data))
-        eprint('todo_dec_changed: user_data = {0}'.format(user_data))
-        eprint('todo_dec_changed: widget = {0}'.format(widget))
+    def todo_desc_changed(self, widget, data, user_data=None):
+        """set the todo_desc"""
+        eprint("todo_dec_changed: data = {0}".format(data))
+        eprint("todo_dec_changed: user_data = {0}".format(user_data))
+        eprint("todo_dec_changed: widget = {0}".format(widget))
 
         self.todo_desc = data
 
-
     def todo_colums(self):
-        todo_label = urwid.Text(u"Todo: ")
+        todo_label = urwid.Text("Todo: ")
         self.todo_edit = urwid.Edit()
-        urwid.connect_signal(self.todo_edit, 'change', self.todo_desc_changed)
+        urwid.connect_signal(self.todo_edit, "change", self.todo_desc_changed)
         todo_cols = urwid.Columns(
             [
                 (16, todo_label),
@@ -164,29 +153,25 @@ class TodoDetailDialog(urwid.WidgetWrap):
         )
         return todo_cols
 
-
     def ok_cancel_columns(self):
-        ok_btn = urwid.Button(u"Ok")
-        cancel_btn = urwid.Button(u"Cancel")
+        ok_btn = urwid.Button("Ok")
+        cancel_btn = urwid.Button("Cancel")
 
         self.ok_button = ok_btn
         self.cancel_button = cancel_btn
 
         urwid.connect_signal(
-                self.ok_button,
-                'click',
-                lambda button:self._emit('close-ok')
-            )
+            self.ok_button, "click", lambda button: self._emit("close-ok")
+        )
         urwid.connect_signal(
-                self.cancel_button,
-                'click',
-                lambda button:self._emit('close-cancel')
-            )
- 
-        ok_btn_attr = urwid.AttrMap(ok_btn, None, focus_map='reversed')
-        cancel_btn_attr = urwid.AttrMap(cancel_btn, None, focus_map='reversed')
+            self.cancel_button, "click", lambda button: self._emit("close-cancel")
+        )
 
-        ok_cancel_cols = urwid.Columns([
+        ok_btn_attr = urwid.AttrMap(ok_btn, None, focus_map="reversed")
+        cancel_btn_attr = urwid.AttrMap(cancel_btn, None, focus_map="reversed")
+
+        ok_cancel_cols = urwid.Columns(
+            [
                 (8, ok_btn_attr),
                 (10, cancel_btn_attr),
             ],
@@ -195,121 +180,103 @@ class TodoDetailDialog(urwid.WidgetWrap):
             min_width=1,
             box_columns=None,
         )
-        ok_cancel_cols = urwid.GridFlow([ok_btn_attr,cancel_btn_attr], 10, 1, 1, "right")
+        ok_cancel_cols = urwid.GridFlow(
+            [ok_btn_attr, cancel_btn_attr], 10, 1, 1, "right"
+        )
         return ok_cancel_cols
 
     def done_columns(self):
-        done_label = urwid.Text(u"Done: ")
+        done_label = urwid.Text("Done: ")
         self.done_group = []
-        self.done_yes = urwid.RadioButton(self.done_group, u"Finished")
-        self.done_no = urwid.RadioButton(self.done_group, u"Unfinished")
-        urwid.connect_signal(
-                self.done_yes,
-                'change',
-                self.on_done_yes_rdbtn_clicked
+        self.done_yes = urwid.RadioButton(self.done_group, "Finished")
+        self.done_no = urwid.RadioButton(self.done_group, "Unfinished")
+        urwid.connect_signal(self.done_yes, "change", self.on_done_yes_rdbtn_clicked)
+        urwid.connect_signal(self.done_no, "change", self.on_done_no_rdbtn_clicked)
+        done_cols = urwid.Columns(
+            [
+                (15, done_label),
+                (14, self.done_yes),
+                (14, self.done_no),
+            ]
         )
-        urwid.connect_signal(
-                self.done_no,
-                'change',
-                self.on_done_no_rdbtn_clicked
-        )
-        done_cols = urwid.Columns([
-            (15, done_label),
-            (14, self.done_yes),
-            (14, self.done_no),
-        ])
         return done_cols
 
     def on_done_yes_rdbtn_clicked(self, widget, user_data):
-        #eprint('on_done_yes_rdbtn_clicked: data = {0}'.format(data))
-        eprint('on_done_yes_rdbtn_clicked: user_data = {0}'.format(user_data))
-        eprint('on_done_yes_rdbtn_clicked: widget = {0}'.format(widget))
+        # eprint('on_done_yes_rdbtn_clicked: data = {0}'.format(data))
+        eprint("on_done_yes_rdbtn_clicked: user_data = {0}".format(user_data))
+        eprint("on_done_yes_rdbtn_clicked: widget = {0}".format(widget))
         self.done = not widget.state
-        eprint('self.done = {0}'.format(self.done))
+        eprint("self.done = {0}".format(self.done))
 
     def on_done_no_rdbtn_clicked(self, widget, user_data):
-        #eprint('on_done_no_rdbtn_clicked: data = {0}'.format(data))
-        eprint('on_done_no_rdbtn_clicked: user_data = {0}'.format(user_data))
-        eprint('on_done_no_rdbtn_clicked: widget = {0}'.format(widget))
+        # eprint('on_done_no_rdbtn_clicked: data = {0}'.format(data))
+        eprint("on_done_no_rdbtn_clicked: user_data = {0}".format(user_data))
+        eprint("on_done_no_rdbtn_clicked: widget = {0}".format(widget))
         self.done = widget.state
-        eprint('self.done = {0}'.format(self.done))
+        eprint("self.done = {0}".format(self.done))
 
     def priority_columns(self):
         priority_group = []
-        priority_label = urwid.Text(u"Priority: ")
-        priority_high = urwid.RadioButton(priority_group, u"High")
-        priority_medium = urwid.RadioButton(priority_group, u"Medium")
-        priority_low = urwid.RadioButton(priority_group, u"Low")
-        urwid.connect_signal(
-                priority_high,
-                'change',
-                self.on_priority_high_clicked
-            )
-        urwid.connect_signal(
-                priority_medium,
-                'change',
-                self.on_priority_medium_clicked
-            )
-        urwid.connect_signal(
-                priority_low,
-                'change',
-                self.on_priority_low_clicked
-            )
-        priority_cols = urwid.Columns([
-            (15, priority_label),
-            (10,priority_high),
-            (12,priority_medium),
-            (13,priority_low),
-        ])
+        priority_label = urwid.Text("Priority: ")
+        priority_high = urwid.RadioButton(priority_group, "High")
+        priority_medium = urwid.RadioButton(priority_group, "Medium")
+        priority_low = urwid.RadioButton(priority_group, "Low")
+        urwid.connect_signal(priority_high, "change", self.on_priority_high_clicked)
+        urwid.connect_signal(priority_medium, "change", self.on_priority_medium_clicked)
+        urwid.connect_signal(priority_low, "change", self.on_priority_low_clicked)
+        priority_cols = urwid.Columns(
+            [
+                (15, priority_label),
+                (10, priority_high),
+                (12, priority_medium),
+                (13, priority_low),
+            ]
+        )
         return priority_cols
 
-
     def on_priority_high_clicked(self, widget, user_data):
-        eprint('on_done_no_rdbtn_clicked: user_data = {0}'.format(user_data))
-        eprint('on_done_no_rdbtn_clicked: widget = {0}'.format(widget))
+        eprint("on_done_no_rdbtn_clicked: user_data = {0}".format(user_data))
+        eprint("on_done_no_rdbtn_clicked: widget = {0}".format(widget))
         if widget.state is False:
             self.priority = 1
-        eprint('self.priority = {0}'.format(self.priority))
+        eprint("self.priority = {0}".format(self.priority))
 
     def on_priority_medium_clicked(self, widget, user_data):
-        eprint('on_done_no_rdbtn_clicked: user_data = {0}'.format(user_data))
-        eprint('on_done_no_rdbtn_clicked: widget = {0}'.format(widget))
+        eprint("on_done_no_rdbtn_clicked: user_data = {0}".format(user_data))
+        eprint("on_done_no_rdbtn_clicked: widget = {0}".format(widget))
         if widget.state is False:
             self.priority = 2
-        eprint('self.priority = {0}'.format(self.priority))
-
+        eprint("self.priority = {0}".format(self.priority))
 
     def on_priority_low_clicked(self, widget, user_data):
-        eprint('on_done_no_rdbtn_clicked: user_data = {0}'.format(user_data))
-        eprint('on_done_no_rdbtn_clicked: widget = {0}'.format(widget))
+        eprint("on_done_no_rdbtn_clicked: user_data = {0}".format(user_data))
+        eprint("on_done_no_rdbtn_clicked: widget = {0}".format(widget))
         if widget.state is False:
             self.priority = 3
-        eprint('self.priority = {0}'.format(self.priority))
+        eprint("self.priority = {0}".format(self.priority))
 
     def on_blocked_reason_changed(self, widget, data):
-        eprint('on_blocked_reason_changed: data = {0}'.format(data))
-        eprint('on_blocked_reason_changed: widget = {0}'.format(widget))
+        eprint("on_blocked_reason_changed: data = {0}".format(data))
+        eprint("on_blocked_reason_changed: widget = {0}".format(widget))
         self.blocked_reason = data
-        if self.blocked_reason == '':
+        if self.blocked_reason == "":
             self.blocked = False
         else:
             self.blocked = True
-        eprint('self.blocked_reason = {0}'.format(self.blocked_reason))
-        eprint('self.blocked = {0}'.format(self.blocked))
-
+        eprint("self.blocked_reason = {0}".format(self.blocked_reason))
+        eprint("self.blocked = {0}".format(self.blocked))
 
     def blocked_columns(self):
-        blocked_label = urwid.Text(u"Blocked Reason: ")
+        blocked_label = urwid.Text("Blocked Reason: ")
         blocked_edit = urwid.Edit()
-        urwid.connect_signal(blocked_edit, 'change', self.on_blocked_reason_changed)
+        urwid.connect_signal(blocked_edit, "change", self.on_blocked_reason_changed)
         blocked_cols = urwid.Columns(
             [
-                (16,blocked_label),
+                (16, blocked_label),
                 (25, blocked_edit),
             ]
         )
         return blocked_cols
-
 
 
 class TodoDetailLauncher(urwid.PopUpLauncher):
@@ -317,26 +284,15 @@ class TodoDetailLauncher(urwid.PopUpLauncher):
         LOG.info("TodoDetailLauncher: init object")
         self.__super.__init__(urwid.Button(""))
         urwid.connect_signal(
-                self.original_widget,
-                'click',
-                lambda button: self.open_pop_up()
+            self.original_widget, "click", lambda button: self.open_pop_up()
         )
         LOG.info("TodoDetailLauncher: init DONE")
-
 
     def create_pop_up(self):
         LOG.info("TodoDetailLauncher: create_pop_up called")
         pop_up = TodoDetailDialog("Todo Detail")
-        urwid.connect_signal(
-            pop_up,
-            'close-ok',
-            self.on_ok_clicked
-        )
-        urwid.connect_signal(
-            pop_up,
-            'close-cancel',
-            self.on_cancel_clicked
-        )
+        urwid.connect_signal(pop_up, "close-ok", self.on_ok_clicked)
+        urwid.connect_signal(pop_up, "close-cancel", self.on_cancel_clicked)
         LOG.info("TodoDetailLauncher: create_pop_up done")
         return pop_up
 
@@ -346,24 +302,22 @@ class TodoDetailLauncher(urwid.PopUpLauncher):
     def on_ok_clicked(self, user_data):
         self.close_pop_up()
 
-
     def get_pop_up_parameters(self):
         LOG.info("TodoDetailLauncher: get_pop_up_parameter called")
-        return {'left':-5, 'top':1, 'overlay_width':60, 'overlay_height':8}
+        return {"left": -5, "top": 1, "overlay_width": 60, "overlay_height": 8}
 
-class SimpleLayout():
+
+class SimpleLayout:
     _palette = [
-        ('banner', 'black', 'light gray'),
-        ('selectable', 'white', 'black'),
-        ('focus', 'black', 'light gray')
+        ("banner", "black", "light gray"),
+        ("selectable", "white", "black"),
+        ("focus", "black", "light gray"),
     ]
 
     def __init__(self):
         self._body = self.body()
         self._loop = urwid.MainLoop(
-            self._body,
-            self._palette,
-            unhandled_input=self.handle_keys
+            self._body, self._palette, unhandled_input=self.handle_keys
         )
 
     def reset_layout(self, widget):
@@ -381,7 +335,7 @@ class SimpleLayout():
 
 class OpenOkDialogScreen(SimpleLayout):
     """
-        This is just to test out the OkDialog
+    This is just to test out the OkDialog
     """
 
     def body(self):
@@ -390,7 +344,7 @@ class OpenOkDialogScreen(SimpleLayout):
         header = urwid.Pile([header_label], focus_item=None)
         head_final_widget = urwid.LineBox(header)
 
-        body = urwid.LineBox(urwid.Padding(urwid.Filler(urwid.Text(''))))
+        body = urwid.LineBox(urwid.Padding(urwid.Filler(urwid.Text(""))))
 
         footer_text = (
             "foot",
@@ -409,48 +363,42 @@ class OpenOkDialogScreen(SimpleLayout):
 
         return urwid.Padding(simple_ui, right=0, left=0)
 
-
     def on_ok_clicked(self, widget):
         self.reset_layout(self._body)
 
-
     def open_ok_dialog(self):
-        ok = OkDialog("hello", ["This is a line\n", "\n", "and this is a line\n", "\n", "So Cool\n"])
-
-        urwid.connect_signal(
-            ok,
-            'ok-click',
-            self.on_ok_clicked
+        ok = OkDialog(
+            "hello",
+            ["This is a line\n", "\n", "and this is a line\n", "\n", "So Cool\n"],
         )
 
+        urwid.connect_signal(ok, "ok-click", self.on_ok_clicked)
+
         w = urwid.Overlay(
-                ok,
-                self._body,
-                'center', ok.width,
-                'middle', ok.height,
-            )
+            ok,
+            self._body,
+            "center",
+            ok.width,
+            "middle",
+            ok.height,
+        )
 
         self._loop.widget = w
 
-
     def handle_keys(self, key):
-        if key == 'f8':
+        if key == "f8":
             raise urwid.ExitMainLoop()
-        if key == 'o':
+        if key == "o":
             self.open_ok_dialog()
-
 
 
 def run_ok_dialog_ui():
     OpenOkDialogScreen().start()
 
+
 def run_todo_detai_ui():
-    fill = urwid.Filler(urwid.Padding(TodoDetailLauncher(),'center', 15))
-    loop = urwid.MainLoop(
-            fill,
-            [('popbg', 'white', 'dark blue')],
-            pop_ups=True
-        )
+    fill = urwid.Filler(urwid.Padding(TodoDetailLauncher(), "center", 15))
+    loop = urwid.MainLoop(fill, [("popbg", "white", "dark blue")], pop_ups=True)
     loop.run()
 
 
@@ -458,7 +406,7 @@ if __name__ == "__main__":
     menu = [
         "1. Run Todo Detail UI",
         "2. Run OkDialog UI",
-            ]
+    ]
     for i in menu:
         print(i)
 
@@ -467,4 +415,3 @@ if __name__ == "__main__":
         run_todo_detai_ui()
     else:
         run_ok_dialog_ui()
-

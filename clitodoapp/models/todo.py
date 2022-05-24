@@ -24,22 +24,22 @@ class Todo(BaseModel):
     desc = CharField()
     done = BooleanField(default=False)
     priority = IntegerField(choices=[(1, "High"), (2, "Medium"), (3, "Low")], default=2)
-    blocked_reason = CharField(default='')
+    blocked_reason = CharField(default="")
     created_date = DateTimeField(default=datetime.datetime.now)
-
 
 
 class TodoData:
     """This is used to pass data back and forth so that
-    the controller or view are not working with classes 
+    the controller or view are not working with classes
     that can update the database
     """
-    PRIORITIES = {"HIGH":3, "MEDIUM":2, "LOW": 1}
 
-    def __init__(self, id=None, desc=None, done=False, priority=2, blocked_reason=''):
-        self.desc = desc if desc is not None else ''
-        if self.desc == '':
-            raise ValueError('desc can not be an empty string')
+    PRIORITIES = {"HIGH": 3, "MEDIUM": 2, "LOW": 1}
+
+    def __init__(self, id=None, desc=None, done=False, priority=2, blocked_reason=""):
+        self.desc = desc if desc is not None else ""
+        if self.desc == "":
+            raise ValueError("desc can not be an empty string")
         self.done = done
         self.priority = priority
         self.blocked_reason = blocked_reason
@@ -47,35 +47,35 @@ class TodoData:
         try:
             self.id = int(id) if id is not None else 0
         except ValueError as e:
-            raise ValueError('id must be an integer')
+            raise ValueError("id must be an integer")
 
     def __repr__(self):
-        priority_map = {3:"High", 2:"Medium", 1:"Low"}
+        priority_map = {3: "High", 2: "Medium", 1: "Low"}
         return "TodoData(id={0}, todo={1}, done={2}, priority={3}, blocked={4})".format(
-            self.id, self.desc, bool(self.done), priority_map[self.priority], self.blocked
+            self.id,
+            self.desc,
+            bool(self.done),
+            priority_map[self.priority],
+            self.blocked,
         )
 
 
 class Todos:
     """This is the Repository"""
+
     def new(self, desc):
         return self.convert_single(
-                Todo.create(
-                    desc=desc,
-                    done=False,
-                    priority=2,
-                    blocked_reason=''
-                )
-            )
+            Todo.create(desc=desc, done=False, priority=2, blocked_reason="")
+        )
 
     def convert_single(self, todo):
         ret_todo = TodoData(
-                    id=todo.id,
-                    desc=todo.desc,
-                    done=todo.done,
-                    priority=todo.priority,
-                    blocked_reason=todo.blocked_reason
-                )
+            id=todo.id,
+            desc=todo.desc,
+            done=todo.done,
+            priority=todo.priority,
+            blocked_reason=todo.blocked_reason,
+        )
         return ret_todo
 
     def convert_all(self, todo_table_list):
@@ -118,15 +118,14 @@ class Todos:
             return return_val
         else:
             todo_record = Todo.create(
-                    desc=todo.desc,
-                    done=todo.done,
-                    priority=todo.priority,
-                    blocked_reason=todo.blocked_reason
-                )
+                desc=todo.desc,
+                done=todo.done,
+                priority=todo.priority,
+                blocked_reason=todo.blocked_reason,
+            )
             return_val = todo_record.save()
             todo.id = todo_record.id
             return return_val
-
 
     def delete(self, todo):
         """Depricated: use delete_by_id instead"""

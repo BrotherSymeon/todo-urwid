@@ -6,7 +6,8 @@ from peewee import SqliteDatabase
 MODELS = [Todo]
 
 # use an in-memory SQLite for tests.
-test_db = SqliteDatabase(':memory:')
+test_db = SqliteDatabase(":memory:")
+
 
 class BaseTestCase(unittest.TestCase):
     def setUp(self):
@@ -29,8 +30,8 @@ class BaseTestCase(unittest.TestCase):
         # If we wanted, we could re-bind the models to their original
         # database here. But for tests this is probably not necessary.
 
-class DatabaseTestCase(BaseTestCase):
 
+class DatabaseTestCase(BaseTestCase):
     def test_todos_can_create_todo(self):
         ts = Todos()
         todo = ts.new("Get some breakfast")
@@ -38,7 +39,6 @@ class DatabaseTestCase(BaseTestCase):
         assert todo.desc == "Get some breakfast"
         assert todo.done == False
         assert todo.id != None
-
 
     def test_todos_can_insert_todo(self):
         ts = Todos()
@@ -50,7 +50,6 @@ class DatabaseTestCase(BaseTestCase):
         todo.desc = "something different"
         ts.save(todo)
         assert todo.desc == "something different"
-
 
     def test_todos_can_get_by_id(self):
         ts = Todos()
@@ -66,4 +65,4 @@ class DatabaseTestCase(BaseTestCase):
         todo1 = ts.new("Get some breakfast")
         todo2 = ts.new("Get some breakfast")
         todoList = ts.get_all()
-        assert len(todoList) == 3 # stupid test
+        assert len(todoList) == 3  # stupid test

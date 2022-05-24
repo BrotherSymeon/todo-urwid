@@ -9,7 +9,7 @@ class TodoDataTestCase(unittest.TestCase):
 
     def test_throws_if_id_is_string(self):
         try:
-            t = TodoData(id='john')
+            t = TodoData(id="john")
         except ValueError as e:
             assert type(e) == ValueError
 

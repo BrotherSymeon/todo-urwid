@@ -1,9 +1,11 @@
 import logging
 
 from clitodoapp.app.version import __version__
-from clitodoapp.ui import TodoUI, Todos, TodoData, palette
 import tabulate
 import urwid
+
+from clitodoapp.ui import TodoUI, palette
+from clitodoapp.models.todo import Todos, TodoData
 
 LOG = logging.getLogger(__name__)
 

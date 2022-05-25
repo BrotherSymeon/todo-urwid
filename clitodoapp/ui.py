@@ -1,14 +1,12 @@
 import urwid
 import sys
 import traceback
-import pdb
 
 import logging
 
 from clitodoapp.models.todo import Todos, TodoData
 from clitodoapp.widgets.popups import TodoDetailDialog, OkDialog
 from clitodoapp.widgets.square_button import SquareButton
-from panwid.dialog import *
 
 LOG = logging.getLogger(__name__)
 
@@ -85,10 +83,11 @@ class TodoUI:
             LOG.error(e)
 
     def on_edit_dialog_ok_clicked(self, widget, user_args, todo_id=0):
-        mesg = "on_edit_dialog_ok_clicked user_args={0}, widget={1}, todo_id={2}"
+        mesg1 = "on_edit_dialog_ok_clicked "
+        mesg2 = "user_args={0}, widget={1}, todo_id={2}"
+        mesg = mesg1 + mesg2
         LOG.debug(mesg.format(user_args, widget, todo_id))
         try:
-            breakpoint()
             work_done = False
             if len(user_args) == 1:
                 LOG.info("on_edit_dialog_ok_cliked: This is a new todo")
@@ -96,6 +95,8 @@ class TodoUI:
                 if len(widget.get_description()) > 0:
                     t = TodoData(desc=widget.get_description())
                     t.done = int(widget.get_done())
+                    t.priority = int(widget.get_priority())
+                    t.blocked_reason = widget.get_blocked_reason()
                     self.Todos.save(t)
                     work_done = True
 
@@ -106,6 +107,8 @@ class TodoUI:
                     t = self.Todos.get_by_id(user_args[1])
                     t.desc = widget.get_description()
                     t.done = int(widget.get_done())
+                    t.priority = int(widget.get_priority())
+                    t.blocked_reason = widget.get_blocked_reason()
                     self.Todos.save(t)
                     work_done = True
 
@@ -114,7 +117,7 @@ class TodoUI:
                 self.load_filtered_todos()
                 self.ok_dialog(
                     "Congratulations!!",
-                    ["You have sucessfully edited\n", "your first todo item"],
+                    ["You have sucessfully edited\n", "another todo item.. YEAAAYi\n"],
                 )
 
         except Exception as e:
@@ -181,6 +184,8 @@ class TodoUI:
             if todo:
                 self.edit_dialog.set_done(todo.done)
                 self.edit_dialog.set_description(todo.desc)
+                self.edit_dialog.set_priority(todo.priority)
+                self.edit_dialog.set_blocked_reason(todo.blocked_reason)
             # hook up the close-ok and close-cancel events
             urwid.connect_signal(
                 self.edit_dialog, "close-ok", self.on_edit_dialog_ok_clicked, user_data
@@ -193,6 +198,7 @@ class TodoUI:
             )
 
             w = urwid.Overlay(self.edit_dialog, self._body, "center", 60, "middle", 8)
+
             self._loop.widget = w
 
         except Exception as e:
@@ -243,6 +249,7 @@ class TodoUI:
             )
             widget = urwid.Pile([cols], focus_item=None)
         except Exception as e:
+            LOG.error(e)
             traceback.print_exc(file=sys.stdout)
         return widget
 
@@ -292,7 +299,7 @@ class TodoUI:
         self.load_filtered_todos()
 
     def load_employees(self):
-        print("loading employees")
+        t = 1/0
 
     def row_item(self, todo, index):
         idCol = ("fixed", 4, urwid.Text(str(todo.id), align="left"))
@@ -358,7 +365,7 @@ class TodoUI:
     def update_header_counts(self):
         todo_list = self.Todos.get_all()
         self.update_todo_count(len(todo_list))
-        nocomp_todos = [t for t in todo_list if bool(t.done) == False]
+        nocomp_todos = [t for t in todo_list if bool(t.done) is False]
         self.update_non_comp_count(len(nocomp_todos))
 
     def load_filtered_todos(self):
@@ -445,8 +452,16 @@ class TodoUI:
 
         try:
             key_dict[key]()
-        except:
-            pass
+        except Exception as e:
+            LOG.error(e)
+            self.ok_dialog(
+                    "Error.",
+                    [
+                        e.args[0] + "\n",
+                        "Please contact you system Administrator",
+                    ],
+                )
+
 
 
 if __name__ == "__main__":

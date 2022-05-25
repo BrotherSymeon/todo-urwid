@@ -1,0 +1,29 @@
+attrs==21.4.0
+click==8.1.3
+# Editable Git install with no remote (clitodoapp==0.0.1)
+-e /home/innocent/Documents/projects/pyprojects/clitodoapp
+flake8==4.0.1
+iniconfig==1.1.1
+mccabe==0.6.1
+orderedattrdict==1.6.0
+packaging==21.3
+panwid==0.3.5
+peewee==3.14.10
+peewee-moves==2.1.0
+pluggy==1.0.0
+py==1.11.0
+pycodestyle==2.8.0
+pyflakes==2.4.0
+pyparsing==3.0.8
+pytest==7.1.1
+pytz==2022.1
+PyYAML==6.0
+raccoon==3.0.0
+sh==1.14.2
+six==1.16.0
+tabulate==0.8.9
+tomli==2.0.1
+typing==3.7.4.3
+urwid==2.1.2
+urwid-readline==0.13
+urwid-utils==0.1.2

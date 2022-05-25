@@ -2,6 +2,7 @@ import urwid
 import sys
 import logging
 
+
 LOG = logging.getLogger(__name__)
 
 
@@ -63,7 +64,7 @@ class TodoDetailDialog(urwid.WidgetWrap):
         # done or not this is set when the user clicks the radiobutton
         self.done = False
         # priority of the todo 1, 2 or 3. this is set when the user clicks the radiobutton
-        self.priority = 0
+        self.priority = 2
         # if its blocked or not. this is set when the user clicks the radiobutton
         self.blocked = False
         # reason for the blockage. this is set when the user clicks the radiobutton
@@ -92,24 +93,41 @@ class TodoDetailDialog(urwid.WidgetWrap):
         except Exception as e:
             LOG.error(e)
 
-    def set_done(self, done):
-        if bool(done):
-            self.done_yes.set_state(True)
-            self.done_no.set_state(False)
+    def set_blocked_reason(self, reason):
+        self.blocked_reason = reason
+        self.blocked_edit.set_edit_text(reason)
+        if len(self.blocked_reason) > 0:
+            self.blocked = True
         else:
-            self.done_yes.set_state(False)
-            self.done_no.set_state(True)
+            self.blocked = False
 
-    def get_done_state(self):
-        for l in self.done_group:
-            if l.state == True:
-                return l.label
+    def get_blocked_reason(self):
+        return self.blocked_reason
+
+    def set_priority(self, priority):
+        if priority == 1:
+            # low
+            self.priority = 1
+            self.priority_low.set_state(True)
+        elif priority == 2:
+            # medium
+            self.priority = 2
+            self.priority_medium.set_state(True)
+        elif priority == 3:
+            # high
+            self.priority = 3
+            self.priority_high.set_state(True)
+        else:
+            raise ValueError("The priority can only be set to 1, 2 or 3")
+
+    def get_priority(self):
+        return self.priority
+
+    def set_done(self, done):
+        self.ckbx_done.set_state(bool(done))
 
     def get_done(self):
-        if self.get_done_state() == "Finished":
-            return True
-        else:
-            return False
+        return self.ckbx_done.get_state()
 
     def set_description(self, desc):
         self.todo_edit.set_edit_text(desc)
@@ -187,70 +205,71 @@ class TodoDetailDialog(urwid.WidgetWrap):
 
     def done_columns(self):
         done_label = urwid.Text("Done: ")
-        self.done_group = []
-        self.done_yes = urwid.RadioButton(self.done_group, "Finished")
-        self.done_no = urwid.RadioButton(self.done_group, "Unfinished")
-        urwid.connect_signal(self.done_yes, "change", self.on_done_yes_rdbtn_clicked)
-        urwid.connect_signal(self.done_no, "change", self.on_done_no_rdbtn_clicked)
+        self.ckbx_done = urwid.CheckBox("       ", False)
+        urwid.connect_signal(self.ckbx_done, "change", self.on_ckbx_done_changed)
         done_cols = urwid.Columns(
             [
                 (15, done_label),
-                (14, self.done_yes),
-                (14, self.done_no),
+                (28, self.ckbx_done),
             ]
         )
         return done_cols
 
-    def on_done_yes_rdbtn_clicked(self, widget, user_data):
-        # eprint('on_done_yes_rdbtn_clicked: data = {0}'.format(data))
-        eprint("on_done_yes_rdbtn_clicked: user_data = {0}".format(user_data))
-        eprint("on_done_yes_rdbtn_clicked: widget = {0}".format(widget))
+    def on_ckbx_done_changed(self, widget, user_data):
+        eprint("on_ckbx_done_changed: user_data = {0}".format(user_data))
+        eprint("on_ckbx_done_changed: widget = {0}".format(widget))
         self.done = not widget.state
         eprint("self.done = {0}".format(self.done))
 
-    def on_done_no_rdbtn_clicked(self, widget, user_data):
-        # eprint('on_done_no_rdbtn_clicked: data = {0}'.format(data))
-        eprint("on_done_no_rdbtn_clicked: user_data = {0}".format(user_data))
-        eprint("on_done_no_rdbtn_clicked: widget = {0}".format(widget))
-        self.done = widget.state
-        eprint("self.done = {0}".format(self.done))
-
     def priority_columns(self):
-        priority_group = []
+        self.priority_group = []
         priority_label = urwid.Text("Priority: ")
-        priority_high = urwid.RadioButton(priority_group, "High")
-        priority_medium = urwid.RadioButton(priority_group, "Medium")
-        priority_low = urwid.RadioButton(priority_group, "Low")
-        urwid.connect_signal(priority_high, "change", self.on_priority_high_clicked)
-        urwid.connect_signal(priority_medium, "change", self.on_priority_medium_clicked)
-        urwid.connect_signal(priority_low, "change", self.on_priority_low_clicked)
+        self.priority_high = urwid.RadioButton(self.priority_group, "High")
+        self.priority_medium = urwid.RadioButton(self.priority_group, "Medium")
+        self.priority_low = urwid.RadioButton(self.priority_group, "Low")
+        urwid.connect_signal(
+            self.priority_high, "change", self.on_priority_high_clicked
+        )
+        urwid.connect_signal(
+            self.priority_medium, "change", self.on_priority_medium_clicked
+        )
+        urwid.connect_signal(self.priority_low, "change", self.on_priority_low_clicked)
         priority_cols = urwid.Columns(
             [
                 (15, priority_label),
-                (10, priority_high),
-                (12, priority_medium),
-                (13, priority_low),
+                (10, self.priority_high),
+                (12, self.priority_medium),
+                (13, self.priority_low),
             ]
         )
         return priority_cols
 
     def on_priority_high_clicked(self, widget, user_data):
-        eprint("on_done_no_rdbtn_clicked: user_data = {0}".format(user_data))
-        eprint("on_done_no_rdbtn_clicked: widget = {0}".format(widget))
+        eprint(
+            "on_priority_high_clicked: widget={0} user_data={1}".format(
+                widget, user_data
+            )
+        )
         if widget.state is False:
             self.priority = 1
         eprint("self.priority = {0}".format(self.priority))
 
     def on_priority_medium_clicked(self, widget, user_data):
-        eprint("on_done_no_rdbtn_clicked: user_data = {0}".format(user_data))
-        eprint("on_done_no_rdbtn_clicked: widget = {0}".format(widget))
+        eprint(
+            "on_priority_medium_clicked: widget={0} user_data={1}".format(
+                widget, user_data
+            )
+        )
         if widget.state is False:
             self.priority = 2
         eprint("self.priority = {0}".format(self.priority))
 
     def on_priority_low_clicked(self, widget, user_data):
-        eprint("on_done_no_rdbtn_clicked: user_data = {0}".format(user_data))
-        eprint("on_done_no_rdbtn_clicked: widget = {0}".format(widget))
+        eprint(
+            "on_done_no_rdbtn_clicked: widget={0} user_data={1}".format(
+                widget, user_data
+            )
+        )
         if widget.state is False:
             self.priority = 3
         eprint("self.priority = {0}".format(self.priority))
@@ -268,12 +287,14 @@ class TodoDetailDialog(urwid.WidgetWrap):
 
     def blocked_columns(self):
         blocked_label = urwid.Text("Blocked Reason: ")
-        blocked_edit = urwid.Edit()
-        urwid.connect_signal(blocked_edit, "change", self.on_blocked_reason_changed)
+        self.blocked_edit = urwid.Edit()
+        urwid.connect_signal(
+            self.blocked_edit, "change", self.on_blocked_reason_changed
+        )
         blocked_cols = urwid.Columns(
             [
                 (16, blocked_label),
-                (25, blocked_edit),
+                (25, self.blocked_edit),
             ]
         )
         return blocked_cols

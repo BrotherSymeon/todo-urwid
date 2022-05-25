@@ -302,10 +302,18 @@ class TodoUI:
         t = 1/0
 
     def row_item(self, todo, index):
-        idCol = ("fixed", 4, urwid.Text(str(todo.id), align="left"))
+        # idCol = ("fixed", 4, urwid.Text(str(todo.id), align="left"))
+        if todo.blocked:
+            blockedCol = ("fixed", 6, urwid.Text(u"B", align="left"))
+        else:
+            blockedCol = ("fixed", 6, urwid.Text(u"", align="left"))
+       
+        pri = "H" if todo.priority == 3 else "M" if todo.priority == 2 else "L"
+        priorityCol = ("fixed", 6, urwid.Text(pri, align="left"))
+
         doneCol = (
             "fixed",
-            6,
+            7,
             urwid.CheckBox(
                 "",
                 state=bool(todo.done),
@@ -334,8 +342,9 @@ class TodoUI:
         todo_buttons = urwid.Padding(cols, align="right", width="pack")
         row = urwid.Columns(
             [
-                idCol,
                 doneCol,
+                priorityCol,
+                blockedCol,
                 todoCol,
                 todo_buttons,
             ]
@@ -392,8 +401,9 @@ class TodoUI:
         # breakpoint()
         list_heading = urwid.Columns(
             [
-                (5, urwid.Text("Id", align="left")),
                 (7, urwid.Text("Done", align="left")),
+                (6, urwid.Text("Pri", align="left")),
+                (6, urwid.Text("Blk", align="left")),
                 ("pack", urwid.Text("Todo", align="left")),
             ],
             dividechars=0,
@@ -454,13 +464,12 @@ class TodoUI:
             key_dict[key]()
         except Exception as e:
             LOG.error(e)
-            self.ok_dialog(
-                    "Error.",
-                    [
-                        e.args[0] + "\n",
-                        "Please contact you system Administrator",
-                    ],
-                )
+            #self.ok_dialog(
+            #        "Error.",
+            #        [
+            #            "Please contact you system Administrator",
+            #        ],
+            #    )
 
 
 

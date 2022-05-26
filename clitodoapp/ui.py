@@ -29,6 +29,8 @@ class TodoUI:
         ("reversed", "standout", ""),
         ("foot", "light gray", "dark blue", "bold"),
         ("basic", "yellow", "dark blue"),
+        ("high", "dark red", "default"),
+        ("low", "light green", "default"),
         ("b", "black", "dark gray"),
         ("highlight", "black", "light blue"),
         ("bg", "black", "dark blue"),
@@ -304,12 +306,19 @@ class TodoUI:
     def row_item(self, todo, index):
         # idCol = ("fixed", 4, urwid.Text(str(todo.id), align="left"))
         if todo.blocked:
-            blockedCol = ("fixed", 6, urwid.Text(u"B", align="left"))
+            blockedCol = ("fixed", 6, urwid.Text(u"🔒", align="left"))
         else:
             blockedCol = ("fixed", 6, urwid.Text(u"", align="left"))
-       
-        pri = "H" if todo.priority == 3 else "M" if todo.priority == 2 else "L"
-        priorityCol = ("fixed", 6, urwid.Text(pri, align="left"))
+
+        attribute = ''
+        text = ''
+        if todo.priority == 1:
+            attribute = u'high'
+            text = u"🔴"
+        if todo.priority == 3:
+            attribute = u'low'
+            text = u"🔻"
+        priorityCol = ("fixed", 6, urwid.Text((attribute, text), align="left"))
 
         doneCol = (
             "fixed",

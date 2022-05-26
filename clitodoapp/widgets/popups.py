@@ -266,9 +266,10 @@ class TodoDetailDialog(urwid.WidgetWrap):
 
     def on_priority_low_clicked(self, widget, user_data):
         eprint(
-            "on_done_no_rdbtn_clicked: widget={0} user_data={1}".format(
-                widget, user_data
-            )
+                "on_priority_low_clicked: widget={0} user_data={1}".format(
+                    widget,
+                    user_data
+                )
         )
         if widget.state is False:
             self.priority = 3

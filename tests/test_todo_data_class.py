@@ -8,20 +8,21 @@ class TodoDataTestCase(unittest.TestCase):
         assert t is not None
 
     def test_throws_if_id_is_string(self):
-        try:
+        with self.assertRaises(ValueError):
             t = TodoData(id="john")
-        except ValueError as e:
-            assert type(e) == ValueError
 
     def test_throws_if_desc_is_none(self):
-        error_thown = False
-        try:
+        with self.assertRaises(ValueError):
             t = TodoData(desc=None)
-        except ValueError as e:
-            error_thown = True
-            assert type(e) is ValueError
-        assert error_thown is True
 
     def test_priority_defaults_to_2(self):
         t = TodoData(desc="hello")
         assert t.priority == 2 or TodoData.PRIORITIES.MEDIUM
+
+    def test_blocked_is_false_if_no_reason(self):
+        t = TodoData(desc="hello", blocked_reason='')
+        assert t.blocked == False
+    
+    def test_blocked_is_true_if_reason_given(self):
+        t = TodoData(desc="hello", blocked_reason='Here is the reason')
+        assert t.blocked == True

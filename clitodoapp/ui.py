@@ -7,6 +7,7 @@ import logging
 from clitodoapp.models.todo import Todos, TodoData
 from clitodoapp.widgets.popups import TodoDetailDialog, OkDialog
 from clitodoapp.widgets.square_button import SquareButton
+from clitodoapp.components.header import Header
 
 LOG = logging.getLogger(__name__)
 
@@ -255,35 +256,6 @@ class TodoUI:
             traceback.print_exc(file=sys.stdout)
         return widget
 
-    def header_widget(self):
-        self.todos_count_label = urwid.Text("Total Todos", align="left")
-        self.todos_count_display = urwid.Text("0", align="left")
-        self.nocomp_count_label = urwid.Text("Todos Not Completed", align="right")
-        self.nocomp_count_display = urwid.Text("0", align="right")
-        cols = urwid.Columns(
-            [
-                (12, self.todos_count_label),
-                ("weight", 5, self.todos_count_display),
-                # (24, urwid.Text("│")),
-                (19, self.nocomp_count_label),
-                (3, self.nocomp_count_display),
-            ],
-            dividechars=0,
-            focus_column=None,
-            min_width=1,
-            box_columns=None,
-        )
-        # cols.pack((1, 1))
-        header = urwid.Pile([cols], focus_item=None)
-        head_final_widget = self.line_box(header, "Todo System")
-
-        return head_final_widget
-
-    def update_todo_count(self, count):
-        self.todos_count_display.set_text(str(count))
-
-    def update_non_comp_count(self, count):
-        self.nocomp_count_display.set_text(str(count))
 
     def set_filter_buttons(self):
         # breakpoint()
@@ -382,9 +354,9 @@ class TodoUI:
 
     def update_header_counts(self):
         todo_list = self.Todos.get_all()
-        self.update_todo_count(len(todo_list))
+        self.header.total = len(todo_list)
         nocomp_todos = [t for t in todo_list if bool(t.done) is False]
-        self.update_non_comp_count(len(nocomp_todos))
+        self.header.not_completed = len(nocomp_todos)
 
     def load_filtered_todos(self):
         LOG.info("Loading filtered todos")
@@ -402,7 +374,7 @@ class TodoUI:
         # this should be daone after the view is built
         todo_list = self.get_filtered_todos()
 
-        self.header = self.header_widget()
+        self.header = Header('Todo System')
 
         # making the list
         self.list_walker = urwid.SimpleFocusListWalker(self.row_items(todo_list))

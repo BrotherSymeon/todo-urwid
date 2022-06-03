@@ -1,6 +1,18 @@
 import urwid
 
 class Header(urwid.WidgetWrap): 
+    """
+        >>> header = Header('Todo System')
+        >>> header.total = 9
+        >>> canvas = header.render((50,))
+        >>> txt = ''
+        >>> for i in canvas.text:
+        ...     txt = txt + i.decode()
+        ... 
+        >>> assert 'Todo System' in txt
+        >>> assert 'Not Complete' in txt
+        >>> assert 'Total Todos 9' in txt
+    """
     def __init__(self, caption):
         total_label = urwid.Text("Total Todos", align="left")
         not_complete_label = urwid.Text("Not Completed", align="right")
@@ -36,12 +48,12 @@ class Header(urwid.WidgetWrap):
         self.__super.__init__(w)
 
     @property
-    def completed(self):
+    def total(self):
         """
-            >>> from clitodoapp.widgets.header import Header
+            >>> from clitodoapp.components.header import Header
             >>> h = Header("Todo System")
-            >>> h.completed = 9
-            >>> h.completed
+            >>> h.total = 9
+            >>> h.total
             9
             >>>
 
@@ -49,8 +61,8 @@ class Header(urwid.WidgetWrap):
         tup = self.total_display.get_text()
         return int(tup[0])
 
-    @completed.setter
-    def completed(self, completed):
+    @total.setter
+    def total(self, completed):
         self.total_display.set_text(str(completed))
 
     @property
@@ -58,7 +70,7 @@ class Header(urwid.WidgetWrap):
         """
         Gets the not completed display value for this widget
 
-            >>> from clitodoapp.widgets.header import Header
+            >>> from clitodoapp.components.header import Header
             >>> h = Header("Todo System")
             >>> h.not_completed = 9
             >>> h.not_completed
@@ -76,3 +88,8 @@ class Header(urwid.WidgetWrap):
         """
         self.not_complete_display.set_text(str(not_completed))
 
+
+
+
+if __name__ == "__main__":
+    pass

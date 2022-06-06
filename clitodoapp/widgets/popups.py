@@ -1,7 +1,7 @@
 import urwid
 import sys
 import logging
-
+from clitodoapp.helpers.ui_layouts import SimpleLayout
 
 LOG = logging.getLogger(__name__)
 
@@ -16,6 +16,11 @@ def eprint(*args, **kargs):
 
 
 class OkDialog(urwid.WidgetWrap):
+    """A general ok dialog box that you can use to
+    convey whatever message you wish
+    title - a string variable that will be show attthe top
+    mesg - a List of strings that will be placed on the dialog box
+    """
     signals = ["ok-click"]
 
     def __init__(self, title="", mesg=[""]):
@@ -305,6 +310,9 @@ class TodoDetailLauncher(urwid.PopUpLauncher):
     def __init__(self):
         LOG.info("TodoDetailLauncher: init object")
         self.__super.__init__(urwid.Button(""))
+        # self.open_pop_up is a method of urwid.PopUpLauncher
+        # which calls our create_pop_up and get_pop_up_parameters
+        # I know... its wierd.
         urwid.connect_signal(
             self.original_widget, "click", lambda button: self.open_pop_up()
         )
@@ -328,31 +336,6 @@ class TodoDetailLauncher(urwid.PopUpLauncher):
         LOG.info("TodoDetailLauncher: get_pop_up_parameter called")
         return {"left": -5, "top": 1, "overlay_width": 60, "overlay_height": 8}
 
-
-class SimpleLayout:
-    _palette = [
-        ("banner", "black", "light gray"),
-        ("selectable", "white", "black"),
-        ("focus", "black", "light gray"),
-    ]
-
-    def __init__(self):
-        self._body = self.body()
-        self._loop = urwid.MainLoop(
-            self._body, self._palette, unhandled_input=self.handle_keys
-        )
-
-    def reset_layout(self, widget):
-        self._loop.widget = widget
-
-    def body(self):
-        raise Exception("you have to overload this")
-
-    def handle_keys(self, key):
-        raise Exception("you have to overload this")
-
-    def start(self):
-        self._loop.run()
 
 
 class OpenOkDialogScreen(SimpleLayout):

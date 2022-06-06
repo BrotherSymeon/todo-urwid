@@ -1,6 +1,11 @@
-import urwid
+import logging
 
-class Header(urwid.WidgetWrap): 
+import urwid
+from clitodoapp.helpers.ui_layouts import SimpleLayout
+
+LOG = logging.getLogger(__name__)
+
+class Header(urwid.WidgetWrap):
     """
         >>> header = Header('Todo System')
         >>> header.total = 9
@@ -8,7 +13,7 @@ class Header(urwid.WidgetWrap):
         >>> txt = ''
         >>> for i in canvas.text:
         ...     txt = txt + i.decode()
-        ... 
+        ...
         >>> assert 'Todo System' in txt
         >>> assert 'Not Complete' in txt
         >>> assert 'Total Todos 9' in txt
@@ -62,8 +67,15 @@ class Header(urwid.WidgetWrap):
         return int(tup[0])
 
     @total.setter
-    def total(self, completed):
-        self.total_display.set_text(str(completed))
+    def total(self, total):
+        try:
+            total = int(total)
+            self.total_display.set_text(str(total))
+        except ValueError as e:
+            LOG.error('error while setting total', e)
+            raise ValueError('total must be an integer', e)
+
+
 
     @property
     def not_completed(self):
@@ -86,10 +98,56 @@ class Header(urwid.WidgetWrap):
         """
             Sets the not completed display value for this widget
         """
-        self.not_complete_display.set_text(str(not_completed))
+        try:
+            not_completed = int(not_completed)
+            self.not_complete_display.set_text(str(not_completed))
+        except ValueError as e:
+            LOG.error('error while setting not_completed', e)
+            raise ValueError('not_completed value must be an integer', e)
+
+
+
+class HeaderTestLayout(SimpleLayout):
+    def __init__(self):
+        self.total_count = 0
+        self.not_done_count = 0
+        super().__init__()
+
+    def body(self):
+        self.header_label = Header("Simple Header")
+        header = urwid.Pile([self.header_label], focus_item=None)
+        head_final_widget = header
+
+        body = urwid.LineBox(urwid.Padding(urwid.Filler(urwid.Text(""))))
+
+        footer_text = (
+            "foot",
+            [
+                "Simple Footer ",
+                ("key", "F8"),
+                " quit    ",
+            ],
+        )
+        footer = urwid.AttrMap(urwid.Text(footer_text), "foot")
+        simple_ui = urwid.Frame(
+            body, header=head_final_widget, footer=footer, focus_part="body"
+        )
+
+        return urwid.Padding(simple_ui, right=0, left=0)
+
+    def inc_total_count(self):
+        self.total_count += 1
+        self.header_label.total = self.total_count
+
+
+    def handle_keys(self, key):
+        if key == "f8":
+            raise urwid.ExitMainLoop()
+        if key == "i":
+            self.inc_total_count()
 
 
 
 
 if __name__ == "__main__":
-    pass
+    HeaderTestLayout().start()

@@ -1,0 +1,21 @@
+session_name: todo
+windows:
+- focus: 'true'
+  layout: a911,194x50,0,0[194x37,0,0{139x37,0,0,2,54x37,140,0,5},194x12,0,38,4]
+  options:
+    automatic-rename: 'off'
+  panes:
+  - nvim
+  - focus: 'true'
+    shell_command: ". ./.venv/bin/activate && ./runpytest.sh"
+  - . ./.venv/bin/activate
+  start_directory: /home/innocent/Documents/projects/pyprojects/clitodoapp
+  window_name: Editor
+- layout: b0c1,194x50,0,0,4
+  options:
+    automatic-rename: 'off'
+  panes:
+  - focus: 'true'
+    shell_command: . ./.venv/bin/activate
+  start_directory: /home/innocent/Documents/projects/pyprojects/clitodoapp
+  window_name: Test
